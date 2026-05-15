@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MaxiBox – Frag einfach</title>
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --primary-light: #E8F5E9;
+            --dark: #37474F;
+            --bg: #FAFAF5;
+            --card: #FFFFFF;
+            --gray: #9E9E9E;
+            --accent: #FF7043;
+            --tab-height: 64px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--dark);
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: var(--tab-height);
+        }
+
+        /* Pages */
+        .page { display: none; padding: 4px 20px 72px; }
+        .page.active { display: block; }
+
+        /* Header */
+        .page-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .logo {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 12px;
+        }
+        .page-header h1 {
+            font-size: 20px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            color: #9E9E9E;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        .page-header p {
+            font-size: 13px;
+            font-weight: 300;
+            color: #9E9E9E;
+            line-height: 1.5;
+            letter-spacing: 0.3px;
+        }
+
+        /* Section titles */
+        .section-title {
+            font-size: 13px;
+            font-weight: 300;
+            color: #9E9E9E;
+            letter-spacing: 1px;
+            margin: 24px 0 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-num {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+        }
+        .card.selected { border-color: var(--primary); }
+        .card h3 { font-size: 14px; font-weight: 400; margin-bottom: 4px; }
+        .card p { font-size: 12px; font-weight: 300; color: #9E9E9E; line-height: 1.4; letter-spacing: 0.3px; }
+
+        /* Option grid */
+        .option-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .option-item {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 14px 12px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .option-item.selected { border-color: var(--primary); background: var(--primary-light); }
+        .option-item .icon { font-size: 28px; margin-bottom: 6px; }
+        .option-item .label { font-size: 13px; font-weight: 400; letter-spacing: 0.3px; }
+        .option-item .desc { font-size: 11px; font-weight: 300; color: #9E9E9E; margin-top: 4px; letter-spacing: 0.3px; }
+
+        /* Language grid */
+        .lang-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .lang-item {
+            background: var(--card);
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .lang-item.selected { border-color: var(--primary); }
+        .flag-img { width: 40px; height: 40px; object-fit: contain; }
+
+        /* Style cards */
+        .style-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            display: flex;
+            gap: 14px;
+        }
+        .style-card.selected { border-color: var(--primary); }
+        .style-card .style-icon { font-size: 24px; flex-shrink: 0; padding-top: 2px; }
+        .style-card .style-info { flex: 1; }
+        .style-card h3 { font-size: 14px; font-weight: 400; margin-bottom: 2px; }
+        .style-card .style-desc { font-size: 12px; color: var(--gray); }
+        .style-card .style-example {
+            font-size: 12px;
+            color: var(--dark);
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 6px 10px;
+            margin-top: 4px;
+            line-height: 1.5;
+            font-style: italic;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            background: #37474F;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 300;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        .btn-primary:hover { background: #455A64; }
+        .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-secondary {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            color: #9E9E9E;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* Antwort page */
+        .answer-box {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            margin-bottom: 16px;
+        }
+        .answer-box .style-tag {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 12px;
+        }
+        .answer-box .answer-text {
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--dark);
+        }
+        .config-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .config-tag {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: #f5f5f5;
+            color: var(--gray);
+        }
+        .audio-preview {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            margin-bottom: 16px;
+        }
+        .audio-preview h4 { font-size: 13px; color: var(--gray); margin-bottom: 8px; }
+
+        /* Abgeschlossen page */
+        .flow-diagram {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 24px 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            margin: 24px 0;
+        }
+        .flow-steps {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .flow-step {
+            text-align: center;
+            flex: 1;
+        }
+        .flow-step .step-icon { font-size: 36px; margin-bottom: 8px; }
+        .flow-step .step-num {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            font-size: 11px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 4px;
+        }
+        .flow-step .step-text { font-size: 11px; color: var(--gray); }
+        .flow-arrow { font-size: 20px; color: var(--gray); }
+
+        /* Test page */
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .input-row input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+        }
+        .input-row input:focus { border-color: var(--primary); }
+        .mic-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            flex-shrink: 0;
+            touch-action: manipulation;
+        }
+        .mic-btn.recording { background: var(--accent); }
+        .example-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .example-tag {
+            font-size: 12px;
+            padding: 8px 14px;
+            background: var(--card);
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            border: 1px solid #eee;
+        }
+        .example-tag:hover { border-color: var(--primary); }
+        .response-area {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .response-area .bot-icon { font-size: 40px; margin-bottom: 8px; }
+        .response-area .placeholder { font-size: 14px; color: var(--gray); }
+        .response-area .answer-content { font-size: 16px; line-height: 1.7; width: 100%; }
+        .response-area .status-text { font-size: 14px; color: var(--accent); margin-top: 8px; }
+
+        /* Fragen page - dark immersive */
+        .page-fragen {
+            background: #1D1D1F;
+            padding: 0 20px;
+            min-height: calc(100vh - var(--tab-height));
+        }
+        .fragen-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - var(--tab-height));
+        }
+        .logo-btn {
+            width: 140px;
+            height: 140px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            position: relative;
+            transition: transform 0.2s;
+        }
+        .logo-btn-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+            filter: drop-shadow(0 0 20px rgba(76, 175, 80, 0.3));
+        }
+        .glow-ring {
+            position: absolute;
+            top: -16px; left: -16px; right: -16px; bottom: -16px;
+            border-radius: 50%;
+            border: 2px solid rgba(108, 99, 255, 0.2);
+            transition: all 0.3s;
+        }
+        .glow-ring.active {
+            border-color: #6C63FF;
+            box-shadow: 0 0 30px rgba(108, 99, 255, 0.4), 0 0 60px rgba(108, 99, 255, 0.2);
+        }
+        .fragen-status {
+            margin-top: 20px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.5);
+            text-align: center;
+            min-height: 20px;
+            letter-spacing: 0.5px;
+        }
+        /* Waveform */
+        .waveform {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            height: 40px;
+            margin: 24px 0;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .waveform.active { opacity: 1; }
+        .waveform span {
+            width: 3px;
+            height: 8px;
+            background: #6C63FF;
+            border-radius: 2px;
+            animation: none;
+        }
+        .waveform.active span { animation: wave 0.6s ease-in-out infinite alternate; }
+        .waveform.playing span { background: #4CAF50; animation: wave 0.6s ease-in-out infinite alternate; }
+        .waveform span:nth-child(1) { animation-delay: 0s; }
+        .waveform span:nth-child(2) { animation-delay: 0.05s; }
+        .waveform span:nth-child(3) { animation-delay: 0.1s; }
+        .waveform span:nth-child(4) { animation-delay: 0.15s; }
+        .waveform span:nth-child(5) { animation-delay: 0.2s; }
+        .waveform span:nth-child(6) { animation-delay: 0.25s; }
+        .waveform span:nth-child(7) { animation-delay: 0.3s; }
+        .waveform span:nth-child(8) { animation-delay: 0.35s; }
+        .waveform span:nth-child(9) { animation-delay: 0.3s; }
+        .waveform span:nth-child(10) { animation-delay: 0.25s; }
+        .waveform span:nth-child(11) { animation-delay: 0.2s; }
+        .waveform span:nth-child(12) { animation-delay: 0.15s; }
+        .waveform span:nth-child(13) { animation-delay: 0.1s; }
+        .waveform span:nth-child(14) { animation-delay: 0.05s; }
+        .waveform span:nth-child(15) { animation-delay: 0s; }
+        @keyframes wave {
+            from { height: 6px; opacity: 0.4; }
+            to { height: 28px; opacity: 1; }
+        }
+        /* Response area dark */
+        .response-area-dark {
+            background: rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .placeholder-dark { font-size: 14px; color: rgba(255,255,255,0.3); }
+        .response-area-dark .answer-content { font-size: 16px; line-height: 1.8; color: rgba(255,255,255,0.9); width: 100%; }
+        .response-area-dark .status-text { font-size: 14px; color: #6C63FF; margin-top: 8px; }
+
+        /* Verlauf page */
+        .search-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .search-row input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+        }
+        .search-row input:focus { border-color: var(--primary); }
+        .filter-btn {
+            padding: 10px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .date-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray);
+            margin: 16px 0 8px;
+        }
+        .history-item {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .history-item .q { font-size: 13px; font-weight: 400; margin-bottom: 4px; }
+        .history-item .a { font-size: 12px; font-weight: 300; color: #9E9E9E; line-height: 1.4; letter-spacing: 0.3px; }
+        .history-item .time { font-size: 11px; font-weight: 300; color: #9E9E9E; flex-shrink: 0; margin-left: 12px; }
+        .empty-state { text-align: center; padding: 40px 0; color: var(--gray); font-size: 14px; }
+
+        /* Hint box */
+        .hint {
+            background: rgba(0,0,0,0.03);
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: 300;
+            color: #9E9E9E;
+            letter-spacing: 0.3px;
+            margin-top: 16px;
+            line-height: 1.5;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+
+        /* Tab bar */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            height: var(--tab-height);
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            z-index: 100;
+        }
+        .tab {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            cursor: pointer;
+            color: var(--gray);
+            font-size: 11px;
+            text-decoration: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .tab.active { color: var(--primary); }
+        .tab .tab-icon { font-size: 22px; }
+        .tab-icon-img { width: 24px; height: 24px; opacity: 0.5; }
+        .tab.active .tab-icon-img { opacity: 1; }
+    </style>
+</head>
+<body>
+
+<!-- Shared header -->
+<div id="sharedHeader" style="display:flex;align-items:center;justify-content:center;gap:14px;padding:6px 20px 4px;max-width:480px;margin:0 auto;">
+    <img src="/static/maxibox.png" style="width:72px;height:72px;object-fit:contain;">
+    <span id="headerTitle" style="font-size:20px;font-weight:300;letter-spacing:2px;color:#9E9E9E;text-transform:uppercase;">Setup</span>
+</div>
+
+<!-- ==================== PAGE 1: SETUP ==================== -->
+<section id="page-setup" class="page active">
+
+    <div class="section-title">In welcher Sprache soll MaxiBox antworten?</div>
+    <div class="lang-grid" id="langGrid">
+        <div class="lang-item selected" data-lang="zh"><img src="/static/flag-zh.png" class="flag-img"></div>
+        <div class="lang-item" data-lang="de"><img src="/static/flag-de.svg" class="flag-img"></div>
+        <div class="lang-item" data-lang="en"><img src="/static/flag-en.svg" class="flag-img"></div>
+        <div class="lang-item" data-lang="fr"><img src="/static/flag-fr.svg" class="flag-img"></div>
+        <div class="lang-item" data-lang="mehr"><img src="/static/flag-mehr.svg" class="flag-img"></div>
+    </div>
+
+    <div class="section-title">Wie alt ist dein Kind?</div>
+    <div class="option-grid" id="ageGrid">
+        <div class="option-item selected" data-age="2-4" style="padding:8px;">
+            <img src="/static/icon-vor.png" style="width:100%;height:auto;object-fit:contain;border-radius:8px;">
+        </div>
+        <div class="option-item" data-age="5-10" style="padding:8px;">
+            <img src="/static/icon-sch.png" style="width:100%;height:auto;object-fit:contain;border-radius:8px;">
+        </div>
+    </div>
+
+    <div class="section-title">Welche Stimme passt am besten?</div>
+    <div class="option-grid" id="voiceGrid">
+        <div class="option-item selected" data-voice="boy" style="padding:8px;">
+            <img src="/static/icon-junge.png" style="width:100%;height:auto;object-fit:contain;border-radius:8px;">
+        </div>
+        <div class="option-item" data-voice="girl" style="padding:8px;">
+            <img src="/static/icon-maedchen.png" style="width:100%;height:auto;object-fit:contain;border-radius:8px;">
+        </div>
+    </div>
+
+    <div class="hint">Du kannst alles später jederzeit in den Einstellungen ändern.</div>
+    <button class="btn-primary" onclick="goToPage('page-test-setup')">Weiter →</button>
+</section>
+
+<!-- ==================== PAGE 2: TEST KI ==================== -->
+<section id="page-test-setup" class="page">
+    <div class="section-title">Beispiel-Frage auswählen</div>
+
+    <div class="card" data-question="Warum regnet es?" onclick="selectQuestion(this)" style="display:flex;align-items:center;gap:14px;">
+        <img src="/static/icon-regnet.png" style="width:64px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;">
+        <div>
+            <h3>Warum regnet es?</h3>
+            <p>Eine Frage über die Natur und alltägliche Phänomene.</p>
+        </div>
+    </div>
+    <div class="card" data-question="Warum muss ich schlafen?" onclick="selectQuestion(this)" style="display:flex;align-items:center;gap:14px;">
+        <img src="/static/icon-schlafen.png" style="width:64px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;">
+        <div>
+            <h3>Warum muss ich schlafen?</h3>
+            <p>Eine Frage über den Körper und gesunde Gewohnheiten.</p>
+        </div>
+    </div>
+    <div class="card" data-question="Warum gibt es Krieg?" onclick="selectQuestion(this)" style="display:flex;align-items:center;gap:14px;">
+        <img src="/static/icon-krieg.png" style="width:64px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;">
+        <div>
+            <h3>Warum gibt es Krieg?</h3>
+            <p>Eine schwierige Frage über die Welt und die Menschen.</p>
+        </div>
+    </div>
+    <div class="card" data-question="Warum darf ich nicht immer iPad spielen?" onclick="selectQuestion(this)" style="display:flex;align-items:center;gap:14px;">
+        <img src="/static/icon-ipad.png" style="width:64px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;">
+        <div>
+            <h3>Warum darf ich nicht immer iPad spielen?</h3>
+            <p>Eine Frage über Regeln und Grenzen.</p>
+        </div>
+    </div>
+
+    <div class="hint">Du kannst später jede Frage ändern. Dies ist nur zum Testen des KI-Systems.</div>
+    <button class="btn-primary" id="btnToStyle" disabled onclick="goToPage('page-stile')">Weiter →</button>
+    <button class="btn-secondary" onclick="goToPage('page-setup')">← Zurück</button>
+</section>
+
+<!-- ==================== PAGE 3: STILE ==================== -->
+<section id="page-stile" class="page">
+    <div class="style-card selected" data-style="direkt" onclick="selectStyle(this)">
+        <img src="/static/icon-direkt.png" style="width:48px;height:48px;flex-shrink:0;">
+        <div class="style-info">
+            <h3>Direkt erklärt</h3>
+            <div class="style-example">„Regen entsteht, wenn viele kleine Wassertropfen aus den Wolken fallen."</div>
+        </div>
+    </div>
+    <div class="style-card" data-style="entdecken" onclick="selectStyle(this)">
+        <img src="/static/icon-entdecken.png" style="width:48px;height:48px;flex-shrink:0;">
+        <div class="style-info">
+            <h3>Gemeinsam entdecken</h3>
+            <div class="style-example">„Hast du schon mal beobachtet, wie die Wolken immer dicker werden? Was glaubst du, passiert dann?"</div>
+        </div>
+    </div>
+    <div class="style-card" data-style="geschichten" onclick="selectStyle(this)">
+        <img src="/static/icon-geschichten.png" style="width:48px;height:48px;flex-shrink:0;">
+        <div class="style-info">
+            <h3>Mit Geschichten</h3>
+            <div class="style-example">„Die kleinen Tropfen in den Wolken spielen zusammen, bis sie so schwer werden, dass sie als Regen herunterfallen."</div>
+        </div>
+    </div>
+    <div class="style-card" data-style="emotional" onclick="selectStyle(this)">
+        <img src="/static/icon-emotional.png" style="width:48px;height:48px;flex-shrink:0;">
+        <div class="style-info">
+            <h3>Emotional unterstützend</h3>
+            <div class="style-example">„Hast du vielleicht ein bisschen Angst vor Donner? Regen entsteht, wenn viele kleine Wassertropfen aus den Wolken fallen."</div>
+        </div>
+    </div>
+
+    <div class="hint">Du kannst den Stil jederzeit ändern.</div>
+    <button class="btn-primary" onclick="generatePreview()">Weiter →</button>
+    <button class="btn-secondary" onclick="goToPage('page-test-setup')">← Zurück</button>
+</section>
+
+<!-- ==================== PAGE 4: ANTWORT ==================== -->
+<section id="page-antwort" class="page">
+    <div class="answer-box">
+        <div class="style-tag" id="answerStyleTag">Direkt erklärt</div>
+        <div class="answer-text" id="previewAnswer">Wird geladen...</div>
+        <div class="config-tags" id="configTags"></div>
+    </div>
+
+    <div class="audio-preview">
+        <h4>MaxiBox Vorschau – Höre dir an, wie MaxiBox spricht.</h4>
+        <audio id="previewAudio" controls style="width:100%"></audio>
+    </div>
+
+    <button class="btn-primary" onclick="goToPage('page-done')">Diese Antwort verwenden →</button>
+    <button class="btn-secondary" onclick="goToPage('page-stile')">← Zurück</button>
+</section>
+
+<!-- ==================== PAGE 5: ABGESCHLOSSEN ==================== -->
+<section id="page-done" class="page">
+    <div class="flow-diagram">
+        <h4 style="text-align:center;margin-bottom:16px;font-size:14px;color:var(--gray);">So funktioniert es</h4>
+        <div class="flow-steps">
+            <div class="flow-step">
+                <img src="/static/icon-frage.png" style="width:64px;height:64px;object-fit:contain;">
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+                <img src="/static/icon-maxibox.png" style="width:64px;height:64px;object-fit:contain;">
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+                <img src="/static/icon-antwort.png" style="width:64px;height:64px;object-fit:contain;">
+            </div>
+        </div>
+    </div>
+
+    <div class="hint">Du kannst alles im Setup-Tab jederzeit ändern.</div>
+    <button class="btn-primary" onclick="finishSetup()">MaxiBox testen →</button>
+    <button class="btn-secondary" onclick="goToPage('page-antwort')">← Zurück</button>
+</section>
+
+<!-- ==================== PAGE 6: MAXIBOX FRAGEN ==================== -->
+<section id="page-test" class="page">
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:48px;min-height:calc(100vh - var(--tab-height) - 48px);">
+
+        <div id="logoBtn" style="width:200px;height:200px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;transition:transform 0.2s;position:relative;">
+            <img src="/static/maxibox.png" style="width:100%;height:100%;object-fit:contain;pointer-events:none;">
+            <div id="recordRing" style="position:absolute;top:-10px;left:-10px;right:-10px;bottom:-10px;border-radius:50%;border:3px solid transparent;transition:border-color 0.2s;"></div>
+        </div>
+
+        <p id="micStatus" style="margin-top:16px;font-size:14px;color:var(--gray);text-align:center;min-height:20px;">Halte gedrückt und sprich</p>
+
+        <div class="response-area" id="responseArea" style="margin-top:32px;width:100%;">
+            <div class="placeholder">Hier erscheint die Antwort von MaxiBox.</div>
+        </div>
+
+    </div>
+</section>
+
+<!-- ==================== PAGE 7: VERLAUF ==================== -->
+<section id="page-verlauf" class="page">
+    <div id="historyList">
+        <div class="empty-state">Noch keine Gespräche vorhanden.</div>
+    </div>
+
+    <div class="hint" style="margin-top:24px;">Verlauf wird nach 7 Tagen automatisch gelöscht.</div>
+</section>
+
+<!-- ==================== TAB BAR ==================== -->
+<!-- Language input modal -->
+<div id="langModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:200;display:none;align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:16px;padding:24px;width:320px;max-width:90%;margin:auto;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">
+        <h3 style="font-size:14px;font-weight:300;letter-spacing:1px;color:#9E9E9E;margin-bottom:16px;text-align:center;text-transform:uppercase;">Sprache eingeben</h3>
+        <input type="text" id="customLangInput" placeholder="z.B. 日本語, 한국어, Hindi..." style="width:100%;padding:12px 16px;border:1px solid #e0e0e0;border-radius:10px;font-size:13px;font-weight:300;outline:none;margin-bottom:16px;letter-spacing:0.3px;">
+        <div style="display:flex;gap:10px;">
+            <button onclick="closeLangModal()" style="flex:1;padding:12px;border:1px solid #e0e0e0;border-radius:10px;background:white;font-size:12px;font-weight:300;letter-spacing:0.5px;color:#9E9E9E;cursor:pointer;">Abbrechen</button>
+            <button onclick="confirmCustomLang()" style="flex:1;padding:12px;border:none;border-radius:10px;background:#1D1D1F;color:white;font-size:12px;font-weight:300;letter-spacing:0.5px;cursor:pointer;">OK</button>
+        </div>
+    </div>
+</div>
+
+<nav class="tab-bar">
+    <div class="tab" data-tab="page-setup" onclick="switchTab('page-setup')">
+        <img class="tab-icon-img" src="/static/icons/setup.svg">
+        <span>Setup</span>
+    </div>
+    <div class="tab active" data-tab="page-test" onclick="switchTab('page-test')">
+        <img class="tab-icon-img" src="/static/icons/test.svg">
+        <span>Fragen</span>
+    </div>
+    <div class="tab" data-tab="page-verlauf" onclick="switchTab('page-verlauf')">
+        <img class="tab-icon-img" src="/static/icons/verlauf.svg">
+        <span>Verlauf</span>
+    </div>
+</nav>
+
+<script>
+// ========== STATE ==========
+let config = JSON.parse(localStorage.getItem('maxibox-config') || 'null') || {
+    language: 'zh', age: '2-4', voice: 'boy', style: 'direkt', setupDone: false
+};
+let selectedQuestion = '';
+let currentAudio = null;
+
+function saveConfig() {
+    localStorage.setItem('maxibox-config', JSON.stringify(config));
+}
+
+// ========== NAVIGATION ==========
+const PAGE_TITLES = {
+    'page-setup': 'Setup', 'page-test-setup': 'Test', 'page-stile': 'Stile',
+    'page-antwort': 'Antwort', 'page-done': 'Bereit', 'page-test': 'Fragen', 'page-verlauf': 'Verlauf'
+};
+
+function goToPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    document.getElementById('headerTitle').textContent = PAGE_TITLES[pageId] || '';
+    document.getElementById('sharedHeader').style.display = pageId === 'page-test' ? 'none' : 'flex';
+    localStorage.setItem('maxibox-page', pageId);
+    window.scrollTo(0, 0);
+}
+
+function switchTab(pageId) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`.tab[data-tab="${pageId}"]`).classList.add('active');
+    goToPage(pageId);
+    localStorage.setItem('maxibox-page', pageId);
+    if (pageId === 'page-verlauf') loadHistory();
+}
+
+function finishSetup() {
+    config.setupDone = true;
+    saveConfig();
+    switchTab('page-test');
+}
+
+// ========== SETUP SELECTIONS ==========
+// Language
+document.querySelectorAll('.lang-item').forEach(el => {
+    el.addEventListener('click', () => {
+        if (el.dataset.lang === 'mehr') {
+            document.getElementById('langModal').style.display = 'block';
+            document.getElementById('customLangInput').focus();
+            return;
+        }
+        document.querySelectorAll('.lang-item').forEach(e => e.classList.remove('selected'));
+        el.classList.add('selected');
+        config.language = el.dataset.lang;
+        saveConfig();
+    });
+});
+
+function closeLangModal() {
+    document.getElementById('langModal').style.display = 'none';
+}
+
+function confirmCustomLang() {
+    const lang = document.getElementById('customLangInput').value.trim();
+    if (lang) {
+        config.language = lang;
+        saveConfig();
+        document.querySelectorAll('.lang-item').forEach(e => e.classList.remove('selected'));
+        document.querySelector('.lang-item[data-lang="mehr"]').classList.add('selected');
+    }
+    closeLangModal();
+}
+
+// Age
+document.querySelectorAll('#ageGrid .option-item').forEach(el => {
+    el.addEventListener('click', () => {
+        document.querySelectorAll('#ageGrid .option-item').forEach(e => e.classList.remove('selected'));
+        el.classList.add('selected');
+        config.age = el.dataset.age;
+        saveConfig();
+    });
+});
+
+// Voice
+document.querySelectorAll('#voiceGrid .option-item').forEach(el => {
+    el.addEventListener('click', () => {
+        document.querySelectorAll('#voiceGrid .option-item').forEach(e => e.classList.remove('selected'));
+        el.classList.add('selected');
+        config.voice = el.dataset.voice;
+        saveConfig();
+    });
+});
+
+// Question selection
+function selectQuestion(el) {
+    document.querySelectorAll('#page-test-setup .card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedQuestion = el.dataset.question;
+    document.getElementById('btnToStyle').disabled = false;
+}
+
+// Style selection
+function selectStyle(el) {
+    document.querySelectorAll('.style-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    config.style = el.dataset.style;
+    saveConfig();
+}
+
+// ========== PREVIEW (Page 4) ==========
+const STYLE_NAMES = {
+    direkt: 'Direkt erklärt', entdecken: 'Gemeinsam entdecken',
+    geschichten: 'Mit Geschichten', emotional: 'Emotional unterstützend'
+};
+const LANG_NAMES = { zh: '中文', de: 'Deutsch', en: 'English', fr: 'Français', it: 'Italiano' };
+
+async function generatePreview() {
+    goToPage('page-antwort');
+    document.getElementById('previewAnswer').textContent = 'Wird geladen...';
+    document.getElementById('answerStyleTag').textContent = STYLE_NAMES[config.style] || config.style;
+
+    const tags = document.getElementById('configTags');
+    tags.innerHTML = `
+        <span class="config-tag">Sprache: ${LANG_NAMES[config.language]}</span>
+        <span class="config-tag">Alter: ${config.age} Jahre</span>
+        <span class="config-tag">${STYLE_NAMES[config.style]}</span>
+        <span class="config-tag">Stimme: ${config.voice === 'boy' ? 'Junge' : 'Mädchen'}</span>
+    `;
+
+    const formData = new FormData();
+    formData.append('question', selectedQuestion);
+    formData.append('language', config.language);
+    formData.append('age', config.age);
+    formData.append('style', config.style);
+    formData.append('voice', config.voice);
+
+    try {
+        const resp = await fetch('/ask-text', { method: 'POST', body: formData });
+        const data = await resp.json();
+        document.getElementById('previewAnswer').textContent = data.answer;
+        document.getElementById('previewAudio').src = data.audio;
+    } catch (err) {
+        document.getElementById('previewAnswer').textContent = 'Fehler beim Laden der Antwort.';
+    }
+}
+
+// ========== FRAGEN PAGE (Page 6) ==========
+const logoBtn = document.getElementById('logoBtn');
+const recordRing = document.getElementById('recordRing');
+const micStatus = document.getElementById('micStatus');
+const responseArea = document.getElementById('responseArea');
+let mediaRecorder, chunks = [];
+
+function showLoading() {
+    responseArea.innerHTML = `
+        <img src="/static/maxibox.png" style="width:48px;height:48px;object-fit:contain;margin-bottom:8px;">
+        <div class="placeholder">MaxiBox denkt nach...</div>
+    `;
+}
+
+function stopPlayback() {
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; return true; }
+    return false;
+}
+
+async function startRecording() {
+    if (stopPlayback()) return;
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+    chunks = [];
+    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+    mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        await sendAudio(blob);
+    };
+    mediaRecorder.start();
+    logoBtn.style.transform = 'scale(1.1)';
+    recordRing.style.borderColor = 'var(--accent)';
+    micStatus.textContent = 'Hört zu...';
+}
+
+function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        logoBtn.style.transform = 'scale(1)';
+        recordRing.style.borderColor = 'transparent';
+        micStatus.textContent = 'Halte gedrückt und sprich';
+    }
+}
+
+async function sendAudio(blob) {
+    showLoading();
+    micStatus.textContent = '';
+    const formData = new FormData();
+    formData.append('audio', blob, 'audio.webm');
+    formData.append('language', config.language);
+    formData.append('age', config.age);
+    formData.append('style', config.style);
+    formData.append('voice', config.voice);
+
+    try {
+        const resp = await fetch('/ask', { method: 'POST', body: formData });
+        if (!resp.ok) throw new Error('Server error');
+        const audioBlob = await resp.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        currentAudio = new Audio(audioUrl);
+        responseArea.innerHTML = `
+            <img src="/static/maxibox.png" style="width:48px;height:48px;object-fit:contain;margin-bottom:8px;">
+            <div class="placeholder">MaxiBox antwortet...</div>
+        `;
+        currentAudio.play();
+        currentAudio.onended = () => {
+            micStatus.textContent = 'Halte gedrückt und sprich';
+            responseArea.innerHTML = '<div class="placeholder">Hier erscheint die Antwort von MaxiBox.</div>';
+            currentAudio = null;
+        };
+    } catch (err) {
+        responseArea.innerHTML = '<div class="placeholder" style="color:var(--accent)">Fehler. Bitte versuche es erneut.</div>';
+        micStatus.textContent = 'Halte gedrückt und sprich';
+    }
+}
+
+// Logo touch/mouse events
+logoBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); });
+logoBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopRecording(); });
+logoBtn.addEventListener('mousedown', startRecording);
+logoBtn.addEventListener('mouseup', stopRecording);
+logoBtn.addEventListener('mouseleave', stopRecording);
+
+// ========== VERLAUF (Page 7) ==========
+async function loadHistory() {
+    try {
+        const resp = await fetch('/history');
+        const data = await resp.json();
+        renderHistory(data);
+    } catch (err) {
+        document.getElementById('historyList').innerHTML = '<div class="empty-state">Fehler beim Laden.</div>';
+    }
+}
+
+function renderHistory(items) {
+    const list = document.getElementById('historyList');
+    if (!items.length) {
+        list.innerHTML = '<div class="empty-state">Noch keine Gespräche vorhanden.</div>';
+        return;
+    }
+
+    let html = '';
+    let currentDate = '';
+    const today = new Date().toISOString().split('T')[0];
+
+    items.forEach(item => {
+        const dateLabel = item.date === today ? 'Heute' : item.date;
+        if (item.date !== currentDate) {
+            currentDate = item.date;
+            html += `<div class="date-label">${dateLabel}</div>`;
+        }
+        const shortAnswer = item.answer.length > 60 ? item.answer.substring(0, 60) + '...' : item.answer;
+        html += `
+            <div class="history-item">
+                <div>
+                    <div class="q">${item.question}</div>
+                    <div class="a">${shortAnswer}</div>
+                </div>
+                <div class="time">${item.time}</div>
+            </div>
+        `;
+    });
+    list.innerHTML = html;
+}
+
+function filterHistory() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('.history-item').forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(query) ? '' : 'none';
+    });
+}
+
+// ========== INIT ==========
+const lastPage = localStorage.getItem('maxibox-page') || (config.setupDone ? 'page-test' : 'page-setup');
+goToPage(lastPage);
+document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === lastPage);
+});
+
+// Restore selections
+document.querySelectorAll('.lang-item').forEach(el => {
+    if (el.dataset.lang === config.language) { el.classList.add('selected'); } else { el.classList.remove('selected'); }
+});
+document.querySelectorAll('#ageGrid .option-item').forEach(el => {
+    if (el.dataset.age === config.age) { el.classList.add('selected'); } else { el.classList.remove('selected'); }
+});
+document.querySelectorAll('#voiceGrid .option-item').forEach(el => {
+    if (el.dataset.voice === config.voice) { el.classList.add('selected'); } else { el.classList.remove('selected'); }
+});
+document.querySelectorAll('.style-card').forEach(el => {
+    if (el.dataset.style === config.style) { el.classList.add('selected'); } else { el.classList.remove('selected'); }
+});
+</script>
+</body>
+</html>

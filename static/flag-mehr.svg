@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs><filter id="s"><feDropShadow dx="3" dy="3" stdDeviation="2" flood-opacity="0.2"/></filter></defs>
+  <circle cx="48" cy="48" r="44" filter="url(#s)" fill="#E0E0E0"/>
+  <text x="48" y="56" text-anchor="middle" font-size="36" font-weight="300" fill="#9E9E9E" font-family="sans-serif">＋</text>
+</svg>

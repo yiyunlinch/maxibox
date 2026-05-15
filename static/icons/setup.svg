@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Slider 1 -->
+  <line x1="8" y1="12" x2="40" y2="12" stroke="#E0E0E0" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="16" cy="12" r="4" fill="#4CAF50"/>
+  <!-- Slider 2 -->
+  <line x1="8" y1="24" x2="40" y2="24" stroke="#E0E0E0" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="30" cy="24" r="4" fill="#37474F"/>
+  <!-- Slider 3 -->
+  <line x1="8" y1="36" x2="40" y2="36" stroke="#E0E0E0" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="22" cy="36" r="4" fill="#4CAF50"/>
+</svg>

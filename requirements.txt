@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+httpx
+edge-tts
+anthropic[vertex]
+python-multipart
+jinja2

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs><filter id="s"><feDropShadow dx="3" dy="3" stdDeviation="2" flood-opacity="0.2"/></filter></defs>
+  <clipPath id="c"><circle cx="48" cy="48" r="44"/></clipPath>
+  <circle cx="48" cy="48" r="44" filter="url(#s)" fill="#012169"/>
+  <g clip-path="url(#c)">
+    <rect x="0" y="0" width="96" height="96" fill="#012169"/>
+    <path d="M0 0L96 96M96 0L0 96" stroke="white" stroke-width="12"/>
+    <path d="M0 0L96 96M96 0L0 96" stroke="#C8102E" stroke-width="6"/>
+    <path d="M48 0V96M0 48H96" stroke="white" stroke-width="18"/>
+    <path d="M48 0V96M0 48H96" stroke="#C8102E" stroke-width="10"/>
+  </g>
+</svg>

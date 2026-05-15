@@ -58,7 +58,7 @@ def build_system_prompt(language="zh", age="2-4", style="direkt"):
         f"你是一个温柔的AI助手，专门回答小朋友的问题。"
         f"{lang_prompt}"
         f"{age_prompt}"
-        f"语气亲切温暖，像妈妈在跟孩子说话。"
+        f"语气亲切温暖，不要自称任何身份。"
         f"回答风格：{style_prompt}"
         f"不要用列举、不要用比喻堆叠，直接简单回答。"
     )

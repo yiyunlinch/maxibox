@@ -910,6 +910,7 @@ const micStatus = document.getElementById('micStatus');
 const responseArea = document.getElementById('responseArea');
 let mediaRecorder, chunks = [];
 let isProcessing = false;
+let conversation = [];
 
 function showLoading() {
     responseArea.innerHTML = `
@@ -960,11 +961,15 @@ async function sendAudio(blob) {
     formData.append('age', config.age);
     formData.append('style', config.style);
     formData.append('voice', config.voice);
+    formData.append('conversation', JSON.stringify(conversation));
 
     try {
         const resp = await fetch('/ask', { method: 'POST', body: formData });
         if (!resp.ok) throw new Error('Server error');
-        const audioBlob = await resp.blob();
+        const data = await resp.json();
+        conversation.push({ question: data.question, answer: data.answer });
+        const audioResp = await fetch(data.audio);
+        const audioBlob = await audioResp.blob();
         const audioUrl = URL.createObjectURL(audioBlob);
         currentAudio = new Audio(audioUrl);
         responseArea.innerHTML = `

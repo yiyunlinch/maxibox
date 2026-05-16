@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 from datetime import datetime
@@ -91,15 +92,21 @@ async def speech_to_text(audio_bytes: bytes) -> str:
     return resp.json()["text"]
 
 
-def generate_answer(question: str, language="zh", age="2-4", style="direkt") -> str:
+def generate_answer(question: str, language="zh", age="2-4", style="direkt", conversation=None) -> str:
     client = AnthropicVertex(project_id=GCP_PROJECT_ID, region=GCP_REGION)
     system_prompt = build_system_prompt(language, age, style)
     max_tok = 80 if age == "2-4" else 150
+    messages = []
+    if conversation:
+        for turn in conversation[-5:]:
+            messages.append({"role": "user", "content": turn["question"]})
+            messages.append({"role": "assistant", "content": turn["answer"]})
+    messages.append({"role": "user", "content": question})
     message = client.messages.create(
         model="claude-sonnet-4-5",
         max_tokens=max_tok,
         system=system_prompt,
-        messages=[{"role": "user", "content": question}],
+        messages=messages,
     )
     return message.content[0].text
 
@@ -124,13 +131,15 @@ async def ask(
     age: str = Form("2-4"),
     style: str = Form("direkt"),
     voice: str = Form("boy"),
+    conversation: str = Form("[]"),
 ):
     try:
+        conv = json.loads(conversation)
         audio_bytes = await audio.read()
         print(f"[1/3] Audio: {len(audio_bytes)} bytes")
         question = await speech_to_text(audio_bytes)
         print(f"[2/3] Frage: {question}")
-        answer = generate_answer(question, language, age, style)
+        answer = generate_answer(question, language, age, style, conv)
         print(f"[3/3] Antwort: {answer}")
         audio_path = await text_to_speech(answer, voice)
         history.append({
@@ -139,7 +148,11 @@ async def ask(
             "time": datetime.now().strftime("%H:%M"),
             "date": datetime.now().strftime("%Y-%m-%d"),
         })
-        return FileResponse(audio_path, media_type="audio/mpeg")
+        return JSONResponse({
+            "question": question,
+            "answer": answer,
+            "audio": f"/audio/{Path(audio_path).name}",
+        })
     except Exception as e:
         print(f"[ERROR] {type(e).__name__}: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)

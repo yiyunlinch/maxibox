@@ -538,12 +538,16 @@
         .tab .tab-icon { font-size: 22px; }
         .tab-icon-img { width: 24px; height: 24px; opacity: 0.5; }
         .tab.active .tab-icon-img { opacity: 1; }
+        #sharedHeader { padding: 6px 20px 4px; }
+        @media (min-width: 500px) {
+            #sharedHeader { padding-top: 28px; }
+        }
     </style>
 </head>
 <body>
 
 <!-- Shared header -->
-<div id="sharedHeader" style="display:flex;align-items:center;justify-content:center;gap:14px;padding:6px 20px 4px;max-width:480px;margin:0 auto;">
+<div id="sharedHeader" style="display:flex;align-items:center;justify-content:center;gap:14px;max-width:480px;margin:0 auto;">
     <img src="/static/maxibox.png" style="width:72px;height:72px;object-fit:contain;">
     <span id="headerTitle" style="font-size:20px;font-weight:300;letter-spacing:2px;color:#9E9E9E;text-transform:uppercase;">Setup</span>
 </div>
@@ -625,28 +629,28 @@
 <!-- ==================== PAGE 3: STILE ==================== -->
 <section id="page-stile" class="page">
     <div class="style-card selected" data-style="direkt" onclick="selectStyle(this)">
-        <img src="/static/icon-direkt.png" style="width:48px;height:48px;flex-shrink:0;">
+        <img src="/static/icon-direkt.png" style="height:48px;flex-shrink:0;">
         <div class="style-info">
             <h3>Direkt erklärt</h3>
             <div class="style-example">„Regen entsteht, wenn viele kleine Wassertropfen aus den Wolken fallen."</div>
         </div>
     </div>
     <div class="style-card" data-style="entdecken" onclick="selectStyle(this)">
-        <img src="/static/icon-entdecken.png" style="width:48px;height:48px;flex-shrink:0;">
+        <img src="/static/icon-entdecken.png" style="height:48px;flex-shrink:0;">
         <div class="style-info">
             <h3>Gemeinsam entdecken</h3>
             <div class="style-example">„Hast du schon mal beobachtet, wie die Wolken immer dicker werden? Was glaubst du, passiert dann?"</div>
         </div>
     </div>
     <div class="style-card" data-style="geschichten" onclick="selectStyle(this)">
-        <img src="/static/icon-geschichten.png" style="width:48px;height:48px;flex-shrink:0;">
+        <img src="/static/icon-geschichten.png" style="height:48px;flex-shrink:0;">
         <div class="style-info">
             <h3>Mit Geschichten</h3>
             <div class="style-example">„Die kleinen Tropfen in den Wolken spielen zusammen, bis sie so schwer werden, dass sie als Regen herunterfallen."</div>
         </div>
     </div>
     <div class="style-card" data-style="emotional" onclick="selectStyle(this)">
-        <img src="/static/icon-emotional.png" style="width:48px;height:48px;flex-shrink:0;">
+        <img src="/static/icon-emotional.png" style="height:48px;flex-shrink:0;">
         <div class="style-info">
             <h3>Emotional unterstützend</h3>
             <div class="style-example">„Hast du vielleicht ein bisschen Angst vor Donner? Regen entsteht, wenn viele kleine Wassertropfen aus den Wolken fallen."</div>

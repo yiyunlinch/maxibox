@@ -23,8 +23,26 @@ GCP_REGION = os.environ.get("GCP_REGION", "us-east5")
 history = []
 
 VOICE_MAP = {
-    "boy": {"voice": "zh-CN-YunxiaNeural"},
-    "girl": {"voice": "zh-CN-XiaoyiNeural", "rate": "-5%", "pitch": "+15Hz"},
+    "zh": {
+        "boy": {"voice": "zh-CN-YunxiaNeural"},
+        "girl": {"voice": "zh-CN-XiaoyiNeural", "rate": "-5%", "pitch": "+15Hz"},
+    },
+    "de": {
+        "boy": {"voice": "de-DE-ConradNeural"},
+        "girl": {"voice": "de-DE-AmalaNeural"},
+    },
+    "en": {
+        "boy": {"voice": "en-US-GuyNeural"},
+        "girl": {"voice": "en-US-AnaNeural"},
+    },
+    "fr": {
+        "boy": {"voice": "fr-FR-HenriNeural"},
+        "girl": {"voice": "fr-FR-DeniseNeural"},
+    },
+    "it": {
+        "boy": {"voice": "it-IT-DiegoNeural"},
+        "girl": {"voice": "it-IT-ElsaNeural"},
+    },
 }
 
 STYLE_PROMPTS = {
@@ -111,9 +129,10 @@ def generate_answer(question: str, language="zh", age="2-4", style="direkt", con
     return message.content[0].text
 
 
-async def text_to_speech(text: str, voice_key="boy") -> str:
+async def text_to_speech(text: str, voice_key="boy", language="zh") -> str:
     output_path = tempfile.mktemp(suffix=".mp3")
-    v = VOICE_MAP.get(voice_key, VOICE_MAP["boy"])
+    lang_voices = VOICE_MAP.get(language, VOICE_MAP["zh"])
+    v = lang_voices.get(voice_key, lang_voices["boy"])
     tts = edge_tts.Communicate(text, voice=v["voice"], rate=v.get("rate", "+0%"), pitch=v.get("pitch", "+0Hz"))
     await tts.save(output_path)
     return output_path
@@ -141,7 +160,7 @@ async def ask(
         print(f"[2/3] Frage: {question}")
         answer = generate_answer(question, language, age, style, conv)
         print(f"[3/3] Antwort: {answer}")
-        audio_path = await text_to_speech(answer, voice)
+        audio_path = await text_to_speech(answer, voice, language)
         history.append({
             "question": question,
             "answer": answer,
@@ -170,7 +189,7 @@ async def ask_text(
         print(f"[1/2] Frage: {question}")
         answer = generate_answer(question, language, age, style)
         print(f"[2/2] Antwort: {answer}")
-        audio_path = await text_to_speech(answer, voice)
+        audio_path = await text_to_speech(answer, voice, language)
         history.append({
             "question": question,
             "answer": answer,

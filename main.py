@@ -25,23 +25,23 @@ history = []
 
 VOICE_MAP = {
     "zh": {
-        "boy": {"voice": "zh-CN-YunxiaNeural", "pitch": "+30Hz"},
+        "boy": {"voice": "zh-CN-YunxiaNeural", "pitch": "+15Hz"},
         "girl": {"voice": "zh-CN-XiaoyiNeural", "rate": "-5%", "pitch": "+15Hz"},
     },
     "de": {
-        "boy": {"voice": "de-DE-ConradNeural", "pitch": "+35Hz"},
+        "boy": {"voice": "de-DE-ConradNeural", "pitch": "+18Hz"},
         "girl": {"voice": "de-DE-AmalaNeural"},
     },
     "en": {
-        "boy": {"voice": "en-US-GuyNeural", "pitch": "+35Hz"},
+        "boy": {"voice": "en-US-GuyNeural", "pitch": "+18Hz"},
         "girl": {"voice": "en-US-AnaNeural"},
     },
     "fr": {
-        "boy": {"voice": "fr-FR-HenriNeural", "pitch": "+35Hz"},
+        "boy": {"voice": "fr-FR-HenriNeural", "pitch": "+18Hz"},
         "girl": {"voice": "fr-FR-DeniseNeural"},
     },
     "it": {
-        "boy": {"voice": "it-IT-DiegoNeural", "pitch": "+35Hz"},
+        "boy": {"voice": "it-IT-DiegoNeural", "pitch": "+18Hz"},
         "girl": {"voice": "it-IT-ElsaNeural"},
     },
 }

@@ -622,7 +622,7 @@
     </div>
 
     <div class="hint">Du kannst später jede Frage ändern. Dies ist nur zum Testen des KI-Systems.</div>
-    <button class="btn-primary" id="btnToStyle" disabled onclick="goToPage('page-stile')">Weiter →</button>
+    <button class="btn-primary" id="btnToStyle" disabled onclick="updateStyleExamples(); goToPage('page-stile')">Weiter →</button>
     <button class="btn-secondary" onclick="goToPage('page-setup')">← Zurück</button>
 </section>
 
@@ -872,6 +872,45 @@ const STYLE_NAMES = {
     geschichten: 'Mit Geschichten', emotional: 'Emotional unterstützend'
 };
 const LANG_NAMES = { zh: '中文', de: 'Deutsch', en: 'English', fr: 'Français', it: 'Italiano' };
+
+const STYLE_EXAMPLES = {
+    'Warum regnet es?': {
+        direkt: '„Regen entsteht, wenn viele kleine Wassertropfen aus den Wolken fallen."',
+        entdecken: '„Hast du schon mal beobachtet, wie die Wolken immer dicker werden? Was glaubst du, passiert dann?"',
+        geschichten: '„Die kleinen Tropfen in den Wolken spielen zusammen, bis sie so schwer werden, dass sie als Regen herunterfallen."',
+        emotional: '„Hast du vielleicht ein bisschen Angst vor Donner? Regen entsteht, wenn viele kleine Wassertropfen aus den Wolken fallen."'
+    },
+    'Warum muss ich schlafen?': {
+        direkt: '„Wenn du schläfst, ruht sich dein Körper aus und dein Gehirn sortiert alles, was du heute gelernt hast."',
+        entdecken: '„Weisst du, was passiert, wenn du ganz müde bist? Warum glaubst du, braucht dein Körper eine Pause?"',
+        geschichten: '„Jede Nacht reisen kleine Helfer durch deinen Körper und reparieren alles, damit du morgen wieder stark bist."',
+        emotional: '„Du möchtest bestimmt noch weiterspielen, oder? Dein Körper braucht Schlaf, damit du morgen wieder voller Energie bist."'
+    },
+    'Warum gibt es Krieg?': {
+        direkt: '„Krieg passiert, wenn Menschen sich so sehr streiten, dass sie nicht mehr miteinander reden können."',
+        entdecken: '„Hast du dich schon mal mit jemandem gestritten? Was passiert, wenn man nicht mehr zuhört?"',
+        geschichten: '„Manchmal vergessen die Erwachsenen, wie man sich verträgt – so wie wenn zwei Kinder dasselbe Spielzeug wollen und keiner teilen möchte."',
+        emotional: '„Es ist ganz normal, dass dich das traurig macht. Krieg passiert, wenn Erwachsene vergessen, aufeinander zu hören."'
+    },
+    'Warum darf ich nicht immer iPad spielen?': {
+        direkt: '„Zu viel Bildschirmzeit ist nicht gut für deine Augen, und dein Gehirn braucht auch andere Sachen zum Lernen."',
+        entdecken: '„Was machst du alles, wenn du nicht am iPad bist? Glaubst du, das ist auch wichtig für dich?"',
+        geschichten: '„Deine Augen sind wie kleine Superhelden – sie brauchen Pausen, damit sie stark bleiben und die Welt draussen sehen können."',
+        emotional: '„Ich weiss, das ist manchmal doof. Deine Eltern möchten, dass du auch draussen spielst, damit du gesund und glücklich bleibst."'
+    }
+};
+
+function updateStyleExamples() {
+    const examples = STYLE_EXAMPLES[selectedQuestion];
+    if (!examples) return;
+    document.querySelectorAll('.style-card').forEach(card => {
+        const style = card.dataset.style;
+        const exampleEl = card.querySelector('.style-example');
+        if (exampleEl && examples[style]) {
+            exampleEl.textContent = examples[style];
+        }
+    });
+}
 
 async function generatePreview() {
     goToPage('page-antwort');

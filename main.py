@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import tempfile
@@ -24,23 +25,23 @@ history = []
 
 VOICE_MAP = {
     "zh": {
-        "boy": {"voice": "zh-CN-YunxiaNeural"},
+        "boy": {"voice": "zh-CN-YunxiaNeural", "pitch": "+30Hz"},
         "girl": {"voice": "zh-CN-XiaoyiNeural", "rate": "-5%", "pitch": "+15Hz"},
     },
     "de": {
-        "boy": {"voice": "de-DE-ConradNeural"},
+        "boy": {"voice": "de-DE-ConradNeural", "pitch": "+35Hz"},
         "girl": {"voice": "de-DE-AmalaNeural"},
     },
     "en": {
-        "boy": {"voice": "en-US-GuyNeural"},
+        "boy": {"voice": "en-US-GuyNeural", "pitch": "+35Hz"},
         "girl": {"voice": "en-US-AnaNeural"},
     },
     "fr": {
-        "boy": {"voice": "fr-FR-HenriNeural"},
+        "boy": {"voice": "fr-FR-HenriNeural", "pitch": "+35Hz"},
         "girl": {"voice": "fr-FR-DeniseNeural"},
     },
     "it": {
-        "boy": {"voice": "it-IT-DiegoNeural"},
+        "boy": {"voice": "it-IT-DiegoNeural", "pitch": "+35Hz"},
         "girl": {"voice": "it-IT-ElsaNeural"},
     },
 }
@@ -144,7 +145,7 @@ async def index():
 
 
 @app.post("/ask")
-async def ask(
+def ask(
     audio: UploadFile,
     language: str = Form("zh"),
     age: str = Form("2-4"),
@@ -154,13 +155,13 @@ async def ask(
 ):
     try:
         conv = json.loads(conversation)
-        audio_bytes = await audio.read()
+        audio_bytes = asyncio.run(audio.read())
         print(f"[1/3] Audio: {len(audio_bytes)} bytes")
-        question = await speech_to_text(audio_bytes)
+        question = asyncio.run(speech_to_text(audio_bytes))
         print(f"[2/3] Frage: {question}")
         answer = generate_answer(question, language, age, style, conv)
         print(f"[3/3] Antwort: {answer}")
-        audio_path = await text_to_speech(answer, voice, language)
+        audio_path = asyncio.run(text_to_speech(answer, voice, language))
         history.append({
             "question": question,
             "answer": answer,
@@ -178,7 +179,7 @@ async def ask(
 
 
 @app.post("/ask-text")
-async def ask_text(
+def ask_text(
     question: str = Form(...),
     language: str = Form("zh"),
     age: str = Form("2-4"),
@@ -189,7 +190,7 @@ async def ask_text(
         print(f"[1/2] Frage: {question}")
         answer = generate_answer(question, language, age, style)
         print(f"[2/2] Antwort: {answer}")
-        audio_path = await text_to_speech(answer, voice, language)
+        audio_path = asyncio.run(text_to_speech(answer, voice, language))
         history.append({
             "question": question,
             "answer": answer,

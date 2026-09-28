@@ -7,9 +7,5 @@ services:
     envVars:
       - key: GROQ_API_KEY
         sync: false
-      - key: GCP_SA_KEY_JSON
+      - key: ANTHROPIC_API_KEY
         sync: false
-      - key: GCP_PROJECT_ID
-        value: prj-six-aa2bbe69
-      - key: GCP_REGION
-        value: us-east5

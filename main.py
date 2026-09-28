@@ -8,7 +8,7 @@ from pathlib import Path
 
 import httpx
 import edge_tts
-from anthropic import AnthropicVertex
+from anthropic import Anthropic
 from fastapi import FastAPI, UploadFile, Form
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -19,8 +19,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 HTML_PATH = Path(__file__).parent / "templates" / "index.html"
 
 GROQ_API_KEY = os.environ["GROQ_API_KEY"]
-GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "prj-six-aa2bbe69")
-GCP_REGION = os.environ.get("GCP_REGION", "us-east5")
 
 DB_PATH = os.environ.get("DB_PATH", str(Path(__file__).parent / "maxibox.db"))
 
@@ -173,21 +171,6 @@ def build_system_prompt(language="zh", age="2-4", style="direkt", strategy=None,
     return prompt
 
 
-def _setup_gcp_credentials():
-    creds_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
-    if creds_path and os.path.isfile(creds_path):
-        return
-    creds_json = os.environ.get("GCP_SA_KEY_JSON", "")
-    if creds_json:
-        tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
-        tmp.write(creds_json)
-        tmp.close()
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = tmp.name
-
-
-_setup_gcp_credentials()
-
-
 async def speech_to_text(audio_bytes: bytes, filename: str = "audio.webm",
                          content_type: str = "audio/webm") -> str:
     # Keine feste Sprache: Whisper erkennt selbst, ob das Kind Deutsch oder
@@ -205,7 +188,8 @@ async def speech_to_text(audio_bytes: bytes, filename: str = "audio.webm",
 
 def generate_answer(question: str, language="zh", age="2-4", style="direkt", conversation=None,
                     strategy=None, previous_answers=None) -> str:
-    client = AnthropicVertex(project_id=GCP_PROJECT_ID, region=GCP_REGION)
+    # Liest den Schlüssel automatisch aus der Umgebungsvariable ANTHROPIC_API_KEY
+    client = Anthropic()
     system_prompt = build_system_prompt(language, age, style, strategy, previous_answers)
     if strategy in REPEAT_PROMPTS:
         max_tok = 160 if age == "2-4" else 300

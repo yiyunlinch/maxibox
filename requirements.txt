@@ -2,6 +2,6 @@ fastapi
 uvicorn
 httpx
 edge-tts
-anthropic[vertex]
+anthropic
 python-multipart
 jinja2

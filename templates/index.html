@@ -1007,6 +1007,7 @@ async function sendAudio(blob) {
         if (!resp.ok) throw new Error('Server error');
         const data = await resp.json();
         conversation.push({ question: data.question, answer: data.answer });
+        saveHistory(data);
         const audioResp = await fetch(data.audio);
         const audioBlob = await audioResp.blob();
         const audioUrl = URL.createObjectURL(audioBlob);
@@ -1037,14 +1038,23 @@ logoBtn.addEventListener('mouseup', stopRecording);
 logoBtn.addEventListener('mouseleave', stopRecording);
 
 // ========== VERLAUF (Page 7) ==========
-async function loadHistory() {
-    try {
-        const resp = await fetch('/history');
-        const data = await resp.json();
-        renderHistory(data);
-    } catch (err) {
-        document.getElementById('historyList').innerHTML = '<div class="empty-state">Fehler beim Laden.</div>';
-    }
+// Der Verlauf bleibt im Browser gespeichert, der Server braucht keine Datenbank
+function saveHistory(data) {
+    const now = new Date();
+    const items = JSON.parse(localStorage.getItem('maxibox-history') || '[]');
+    items.unshift({
+        question: data.question,
+        answer: data.answer,
+        strategy: data.strategy,
+        ask_count: data.ask_count,
+        time: now.toTimeString().slice(0, 5),
+        date: now.toISOString().split('T')[0],
+    });
+    localStorage.setItem('maxibox-history', JSON.stringify(items.slice(0, 100)));
+}
+
+function loadHistory() {
+    renderHistory(JSON.parse(localStorage.getItem('maxibox-history') || '[]'));
 }
 
 function renderHistory(items) {

@@ -1,9 +1,7 @@
 import asyncio
 import json
 import os
-import sqlite3
 import tempfile
-from datetime import datetime
 from pathlib import Path
 
 import httpx
@@ -20,55 +18,21 @@ HTML_PATH = Path(__file__).parent / "templates" / "index.html"
 
 GROQ_API_KEY = os.environ["GROQ_API_KEY"]
 
-DB_PATH = os.environ.get("DB_PATH", str(Path(__file__).parent / "maxibox.db"))
-
-
-def init_db():
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS questions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                question TEXT NOT NULL,
-                question_norm TEXT NOT NULL,
-                answer TEXT NOT NULL,
-                language TEXT,
-                age TEXT,
-                style TEXT,
-                strategy TEXT,
-                ask_count INTEGER NOT NULL DEFAULT 1,
-                created_at TEXT NOT NULL
-            )
-        """)
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_question_norm ON questions(question_norm)")
-
-
-init_db()
-
-
 def normalize_question(question: str) -> str:
     """Interpunktion und Leerzeichen entfernen, damit '为什么天是蓝的?' und
     '为什么天是蓝的' als dieselbe Frage erkannt werden."""
     return "".join(ch for ch in question.lower() if ch.isalnum())
 
 
-def find_previous_answers(question_norm: str) -> list:
-    with sqlite3.connect(DB_PATH) as conn:
-        rows = conn.execute(
-            "SELECT answer FROM questions WHERE question_norm = ? ORDER BY id",
-            (question_norm,),
-        ).fetchall()
-    return [row[0] for row in rows]
+def find_previous_answers(question: str, conversation: list) -> list:
+    """Frühere Antworten auf dieselbe Frage aus dem laufenden Gespräch holen.
+    Das Gespräch schickt das Gerät mit, deshalb braucht es keine Datenbank."""
+    question_norm = normalize_question(question)
+    return [
+        turn["answer"] for turn in conversation
+        if normalize_question(turn.get("question", "")) == question_norm
+    ]
 
-
-def save_question(question, answer, language, age, style, strategy, ask_count):
-    now = datetime.now()
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.execute(
-            "INSERT INTO questions (question, question_norm, answer, language, age, style,"
-            " strategy, ask_count, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (question, normalize_question(question), answer, language, age, style,
-             strategy, ask_count, now.isoformat(timespec="seconds")),
-        )
 
 VOICE_MAP = {
     "zh": {
@@ -243,14 +207,13 @@ def ask(
             audio.filename or "audio.webm",
             audio.content_type or "audio/webm",
         ))
-        previous = find_previous_answers(normalize_question(question))
+        previous = find_previous_answers(question, conv)
         ask_count = len(previous) + 1
         strategy = pick_strategy(ask_count, style)
         print(f"[2/3] Frage: {question} ({ask_count}. Mal, Strategie: {strategy})")
         answer = generate_answer(question, language, age, style, conv, strategy, previous)
         print(f"[3/3] Antwort: {answer}")
         audio_path = asyncio.run(text_to_speech(answer, voice, language))
-        save_question(question, answer, language, age, style, strategy, ask_count)
         return JSONResponse({
             "question": question,
             "answer": answer,
@@ -270,16 +233,17 @@ def ask_text(
     age: str = Form("2-4"),
     style: str = Form("direkt"),
     voice: str = Form("boy"),
+    conversation: str = Form("[]"),
 ):
     try:
-        previous = find_previous_answers(normalize_question(question))
+        conv = json.loads(conversation)
+        previous = find_previous_answers(question, conv)
         ask_count = len(previous) + 1
         strategy = pick_strategy(ask_count, style)
         print(f"[1/2] Frage: {question} ({ask_count}. Mal, Strategie: {strategy})")
-        answer = generate_answer(question, language, age, style, None, strategy, previous)
+        answer = generate_answer(question, language, age, style, conv, strategy, previous)
         print(f"[2/2] Antwort: {answer}")
         audio_path = asyncio.run(text_to_speech(answer, voice, language))
-        save_question(question, answer, language, age, style, strategy, ask_count)
         return JSONResponse({
             "answer": answer,
             "ask_count": ask_count,
@@ -297,23 +261,3 @@ async def get_audio(filename: str):
     if path.exists():
         return FileResponse(path, media_type="audio/mpeg")
     return JSONResponse({"error": "not found"}, status_code=404)
-
-
-@app.get("/history")
-async def get_history():
-    with sqlite3.connect(DB_PATH) as conn:
-        rows = conn.execute(
-            "SELECT question, answer, strategy, ask_count, created_at"
-            " FROM questions ORDER BY id DESC LIMIT 100"
-        ).fetchall()
-    return JSONResponse([
-        {
-            "question": q,
-            "answer": a,
-            "strategy": strategy,
-            "ask_count": ask_count,
-            "time": datetime.fromisoformat(created).strftime("%H:%M"),
-            "date": datetime.fromisoformat(created).strftime("%Y-%m-%d"),
-        }
-        for q, a, strategy, ask_count, created in rows
-    ])

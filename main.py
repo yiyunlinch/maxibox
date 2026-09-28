@@ -6,7 +6,7 @@ from pathlib import Path
 
 import httpx
 import edge_tts
-from anthropic import Anthropic
+from anthropic import AnthropicFoundry
 from fastapi import FastAPI, UploadFile, Form
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -122,7 +122,7 @@ def build_system_prompt(language="zh", age="2-4", style="direkt", strategy=None,
         f"你是一个温柔的AI助手，专门回答小朋友的问题。"
         f"{lang_prompt}"
         f"{age_prompt}"
-        f"语气亲切温暖，不要自称任何身份。"
+        f"语气亲切温暖，不要自称任何身份，不要用表情符号。"
         f"回答风格：{style_prompt}"
     )
     if is_repeat:
@@ -152,8 +152,9 @@ async def speech_to_text(audio_bytes: bytes, filename: str = "audio.webm",
 
 def generate_answer(question: str, language="zh", age="2-4", style="direkt", conversation=None,
                     strategy=None, previous_answers=None) -> str:
-    # Liest den Schlüssel automatisch aus der Umgebungsvariable ANTHROPIC_API_KEY
-    client = Anthropic()
+    # Claude über Azure Foundry. Liest ANTHROPIC_FOUNDRY_API_KEY und
+    # ANTHROPIC_FOUNDRY_RESOURCE automatisch aus der Umgebung.
+    client = AnthropicFoundry()
     system_prompt = build_system_prompt(language, age, style, strategy, previous_answers)
     if strategy in REPEAT_PROMPTS:
         max_tok = 160 if age == "2-4" else 300
@@ -166,12 +167,14 @@ def generate_answer(question: str, language="zh", age="2-4", style="direkt", con
             messages.append({"role": "assistant", "content": turn["answer"]})
     messages.append({"role": "user", "content": question})
     message = client.messages.create(
-        model="claude-sonnet-4-5",
+        model="claude-sonnet-5",
         max_tokens=max_tok,
+        # Sonnet 5 denkt sonst manchmal zuerst nach und braucht dafür die kurzen max_tokens auf
+        thinking={"type": "disabled"},
         system=system_prompt,
         messages=messages,
     )
-    return message.content[0].text
+    return "".join(block.text for block in message.content if block.type == "text")
 
 
 async def text_to_speech(text: str, voice_key="boy", language="zh") -> str:

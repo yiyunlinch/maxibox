@@ -7,5 +7,7 @@ services:
     envVars:
       - key: GROQ_API_KEY
         sync: false
-      - key: ANTHROPIC_API_KEY
+      - key: ANTHROPIC_FOUNDRY_API_KEY
+        sync: false
+      - key: ANTHROPIC_FOUNDRY_RESOURCE
         sync: false

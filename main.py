@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import sqlite3
 import tempfile
 from datetime import datetime
 from pathlib import Path
@@ -21,7 +22,55 @@ GROQ_API_KEY = os.environ["GROQ_API_KEY"]
 GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "prj-six-aa2bbe69")
 GCP_REGION = os.environ.get("GCP_REGION", "us-east5")
 
-history = []
+DB_PATH = os.environ.get("DB_PATH", str(Path(__file__).parent / "maxibox.db"))
+
+
+def init_db():
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS questions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                question TEXT NOT NULL,
+                question_norm TEXT NOT NULL,
+                answer TEXT NOT NULL,
+                language TEXT,
+                age TEXT,
+                style TEXT,
+                strategy TEXT,
+                ask_count INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_question_norm ON questions(question_norm)")
+
+
+init_db()
+
+
+def normalize_question(question: str) -> str:
+    """Interpunktion und Leerzeichen entfernen, damit '为什么天是蓝的?' und
+    '为什么天是蓝的' als dieselbe Frage erkannt werden."""
+    return "".join(ch for ch in question.lower() if ch.isalnum())
+
+
+def find_previous_answers(question_norm: str) -> list:
+    with sqlite3.connect(DB_PATH) as conn:
+        rows = conn.execute(
+            "SELECT answer FROM questions WHERE question_norm = ? ORDER BY id",
+            (question_norm,),
+        ).fetchall()
+    return [row[0] for row in rows]
+
+
+def save_question(question, answer, language, age, style, strategy, ask_count):
+    now = datetime.now()
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            "INSERT INTO questions (question, question_norm, answer, language, age, style,"
+            " strategy, ask_count, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (question, normalize_question(question), answer, language, age, style,
+             strategy, ask_count, now.isoformat(timespec="seconds")),
+        )
 
 VOICE_MAP = {
     "zh": {
@@ -58,6 +107,12 @@ AGE_PROMPTS = {
     "5-10": "可以稍微详细一点，用2到3句话回答，不超过60个字。",
 }
 
+# Bei wiederholten Fragen braucht eine Analogie oder Geschichte etwas mehr Platz.
+AGE_PROMPTS_REPEAT = {
+    "2-4": "用最简单的词语，3到4句话，不超过60个字。",
+    "5-10": "用4到5句话回答，不超过120个字。",
+}
+
 LANGUAGE_PROMPTS = {
     "zh": ("用中文回答。", "zh"),
     "de": ("用德语回答。", "de"),
@@ -67,21 +122,55 @@ LANGUAGE_PROMPTS = {
 }
 
 
-def build_system_prompt(language="zh", age="2-4", style="direkt"):
+REPEAT_PROMPTS = {
+    "analogie": (
+        "孩子已经问过这个问题一次了，说明上次的解释没听懂。"
+        "这次换一种说法：用孩子每天都能看到、摸到的东西打一个比方"
+        "（吃的东西、玩具、小动物、自己的身体）。"
+        "比方要贴近孩子的想法，但事实必须依然科学正确，不能为了简单就说错。"
+    ),
+    "geschichte": (
+        "孩子已经反复问过这个问题好几次了，说明前几次都还没听懂。"
+        "这次用一个很短的小故事，或者一个他自己动手就能试试看的小例子来解释。"
+        "说法要比上次更接近孩子的思维方式，但内容必须依然科学正确，不可以编造。"
+    ),
+}
+
+
+def pick_strategy(ask_count: int, style: str) -> str:
+    """Beim ersten Mal der von den Eltern gewählte Stil, danach Eskalation:
+    Erklärung -> Analogie -> Geschichte."""
+    if ask_count >= 3:
+        return "geschichte"
+    if ask_count == 2:
+        return "analogie"
+    return style
+
+
+def build_system_prompt(language="zh", age="2-4", style="direkt", strategy=None, previous_answers=None):
     if language in LANGUAGE_PROMPTS:
         lang_prompt, _ = LANGUAGE_PROMPTS[language]
     else:
         lang_prompt = f"用{language}回答。"
-    age_prompt = AGE_PROMPTS.get(age, AGE_PROMPTS["2-4"])
+    is_repeat = strategy in REPEAT_PROMPTS
+    age_table = AGE_PROMPTS_REPEAT if is_repeat else AGE_PROMPTS
+    age_prompt = age_table.get(age, age_table["2-4"])
     style_prompt = STYLE_PROMPTS.get(style, STYLE_PROMPTS["direkt"])
-    return (
+    prompt = (
         f"你是一个温柔的AI助手，专门回答小朋友的问题。"
         f"{lang_prompt}"
         f"{age_prompt}"
         f"语气亲切温暖，不要自称任何身份。"
         f"回答风格：{style_prompt}"
-        f"不要用列举、不要用比喻堆叠，直接简单回答。"
     )
+    if is_repeat:
+        prompt += REPEAT_PROMPTS[strategy]
+        if previous_answers:
+            vorher = "；".join(previous_answers[-2:])
+            prompt += f"之前已经这样回答过了：{vorher}。不要再用同样的说法。"
+    else:
+        prompt += "不要用列举、不要用比喻堆叠，直接简单回答。"
+    return prompt
 
 
 def _setup_gcp_credentials():
@@ -99,22 +188,29 @@ def _setup_gcp_credentials():
 _setup_gcp_credentials()
 
 
-async def speech_to_text(audio_bytes: bytes) -> str:
+async def speech_to_text(audio_bytes: bytes, filename: str = "audio.webm",
+                         content_type: str = "audio/webm") -> str:
+    # Keine feste Sprache: Whisper erkennt selbst, ob das Kind Deutsch oder
+    # Chinesisch spricht. Die Antwortsprache kommt weiterhin aus der App.
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
             "https://api.groq.com/openai/v1/audio/transcriptions",
             headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
-            files={"file": ("audio.webm", audio_bytes, "audio/webm")},
-            data={"model": "whisper-large-v3", "language": "zh"},
+            files={"file": (filename, audio_bytes, content_type)},
+            data={"model": "whisper-large-v3"},
         )
         resp.raise_for_status()
     return resp.json()["text"]
 
 
-def generate_answer(question: str, language="zh", age="2-4", style="direkt", conversation=None) -> str:
+def generate_answer(question: str, language="zh", age="2-4", style="direkt", conversation=None,
+                    strategy=None, previous_answers=None) -> str:
     client = AnthropicVertex(project_id=GCP_PROJECT_ID, region=GCP_REGION)
-    system_prompt = build_system_prompt(language, age, style)
-    max_tok = 80 if age == "2-4" else 150
+    system_prompt = build_system_prompt(language, age, style, strategy, previous_answers)
+    if strategy in REPEAT_PROMPTS:
+        max_tok = 160 if age == "2-4" else 300
+    else:
+        max_tok = 80 if age == "2-4" else 150
     messages = []
     if conversation:
         for turn in conversation[-5:]:
@@ -157,20 +253,25 @@ def ask(
         conv = json.loads(conversation)
         audio_bytes = asyncio.run(audio.read())
         print(f"[1/3] Audio: {len(audio_bytes)} bytes")
-        question = asyncio.run(speech_to_text(audio_bytes))
-        print(f"[2/3] Frage: {question}")
-        answer = generate_answer(question, language, age, style, conv)
+        # Dateiname und Format vom Gerät übernehmen (Web: .webm, Android: .m4a)
+        question = asyncio.run(speech_to_text(
+            audio_bytes,
+            audio.filename or "audio.webm",
+            audio.content_type or "audio/webm",
+        ))
+        previous = find_previous_answers(normalize_question(question))
+        ask_count = len(previous) + 1
+        strategy = pick_strategy(ask_count, style)
+        print(f"[2/3] Frage: {question} ({ask_count}. Mal, Strategie: {strategy})")
+        answer = generate_answer(question, language, age, style, conv, strategy, previous)
         print(f"[3/3] Antwort: {answer}")
         audio_path = asyncio.run(text_to_speech(answer, voice, language))
-        history.append({
-            "question": question,
-            "answer": answer,
-            "time": datetime.now().strftime("%H:%M"),
-            "date": datetime.now().strftime("%Y-%m-%d"),
-        })
+        save_question(question, answer, language, age, style, strategy, ask_count)
         return JSONResponse({
             "question": question,
             "answer": answer,
+            "ask_count": ask_count,
+            "strategy": strategy,
             "audio": f"/audio/{Path(audio_path).name}",
         })
     except Exception as e:
@@ -187,17 +288,20 @@ def ask_text(
     voice: str = Form("boy"),
 ):
     try:
-        print(f"[1/2] Frage: {question}")
-        answer = generate_answer(question, language, age, style)
+        previous = find_previous_answers(normalize_question(question))
+        ask_count = len(previous) + 1
+        strategy = pick_strategy(ask_count, style)
+        print(f"[1/2] Frage: {question} ({ask_count}. Mal, Strategie: {strategy})")
+        answer = generate_answer(question, language, age, style, None, strategy, previous)
         print(f"[2/2] Antwort: {answer}")
         audio_path = asyncio.run(text_to_speech(answer, voice, language))
-        history.append({
-            "question": question,
+        save_question(question, answer, language, age, style, strategy, ask_count)
+        return JSONResponse({
             "answer": answer,
-            "time": datetime.now().strftime("%H:%M"),
-            "date": datetime.now().strftime("%Y-%m-%d"),
+            "ask_count": ask_count,
+            "strategy": strategy,
+            "audio": f"/audio/{Path(audio_path).name}",
         })
-        return JSONResponse({"answer": answer, "audio": f"/audio/{Path(audio_path).name}"})
     except Exception as e:
         print(f"[ERROR] {type(e).__name__}: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -213,4 +317,19 @@ async def get_audio(filename: str):
 
 @app.get("/history")
 async def get_history():
-    return JSONResponse(list(reversed(history)))
+    with sqlite3.connect(DB_PATH) as conn:
+        rows = conn.execute(
+            "SELECT question, answer, strategy, ask_count, created_at"
+            " FROM questions ORDER BY id DESC LIMIT 100"
+        ).fetchall()
+    return JSONResponse([
+        {
+            "question": q,
+            "answer": a,
+            "strategy": strategy,
+            "ask_count": ask_count,
+            "time": datetime.fromisoformat(created).strftime("%H:%M"),
+            "date": datetime.fromisoformat(created).strftime("%Y-%m-%d"),
+        }
+        for q, a, strategy, ask_count, created in rows
+    ])

@@ -1,10 +1,10 @@
-"""Die MaxiBox selbst: Knopf einmal drücken, Frage stellen, nochmals drücken.
+"""Die MaxiBox selbst: Knopf gedrückt halten, Frage stellen, loslassen.
 
 Der Knopf hängt an GPIO17 (Pin 11) und GND (Pin 9) und nutzt den internen
 Pull-up-Widerstand. Die LED an GPIO27 (Pin 13, GND an Pin 14) leuchtet, solange
-die Box zuhört. Pausen beim Sprechen beenden die Frage nicht: Sie endet erst mit
-dem zweiten Druck oder nach MAX_SECONDS. Läuft als Dienst maxibox-box (pi/setup.sh).
-Auf dem Pi 5 funktioniert RPi.GPIO nicht mehr, deshalb gpiozero.
+der Knopf gedrückt ist und die Box zuhört. Pausen beim Sprechen beenden die Frage
+nicht: Sie endet erst beim Loslassen oder nach MAX_SECONDS. Läuft als Dienst
+maxibox-box (pi/setup.sh). Auf dem Pi 5 funktioniert RPi.GPIO nicht mehr, deshalb gpiozero.
 """
 import math
 import os
@@ -21,7 +21,7 @@ from talk import MAX_SECONDS, SPEAKER, answer, start_recording, stop_recording
 BUTTON_GPIO = int(os.environ.get("BUTTON_GPIO", "17"))
 LED_GPIO = int(os.environ.get("LED_GPIO", "27"))
 NEW_CHAT_AFTER = 5 * 60  # nach 5 Minuten Pause beginnt ein neues Gespräch
-MIN_SECONDS = 1.0  # kürzere Aufnahmen (z. B. versehentlicher Doppeldruck) werden verworfen
+MIN_SECONDS = 0.5  # kürzeres Drücken gilt als versehentlich
 
 
 def make_beep(path: str) -> None:
@@ -55,14 +55,11 @@ def main() -> None:
         led.on()
         started = time.monotonic()
         proc = start_recording(wav)
-        # Erst den ersten Druck loslassen; der nächste Druck beendet die Frage
         button.wait_for_release(timeout=MAX_SECONDS)
-        remaining = MAX_SECONDS - (time.monotonic() - started)
-        if remaining > 0:
-            button.wait_for_press(timeout=remaining)
         stop_recording(proc)
         led.off()
-        button.wait_for_release(timeout=5)
+        # Nach MAX_SECONDS kann der Knopf noch gedrückt sein: erst loslassen, dann antworten
+        button.wait_for_release()
         if time.monotonic() - started < MIN_SECONDS:
             continue
         conversation = answer(wav, conversation)

@@ -31,9 +31,9 @@ Das Skript
 
 ## Benutzen
 
-Knopf einmal drücken: Ein kurzer Ton kommt, die LED leuchtet und die Box hört zu. Pausen
-beim Sprechen sind kein Problem. Zum Schluss nochmals drücken: Die LED geht aus und die
-Antwort kommt. Ohne zweiten Druck endet die Frage nach 30 Sekunden (`MAX_SECONDS` in `.env`).
+Knopf gedrückt halten: Ein kurzer Ton kommt, die LED leuchtet und die Box hört zu. Pausen
+beim Sprechen sind kein Problem. Zum Schluss loslassen: Die LED geht aus und die Antwort
+kommt. Länger als 30 Sekunden hört die Box nicht zu (`MAX_SECONDS` in `.env`).
 Nach 5 Minuten Pause beginnt ein neues Gespräch. Die Elternseite ist im gleichen WLAN unter
 `http://<IP des Pi>:8000` erreichbar.
 

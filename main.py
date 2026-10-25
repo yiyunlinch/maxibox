@@ -7,6 +7,7 @@ from pathlib import Path
 import httpx
 import edge_tts
 from anthropic import Anthropic
+from openai import OpenAI
 from fastapi import FastAPI, UploadFile, Form
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -17,7 +18,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 HTML_PATH = Path(__file__).parent / "templates" / "index.html"
 
 GROQ_API_KEY = os.environ["GROQ_API_KEY"]
-# Modell per Umgebungsvariable wählbar, z. B. claude-haiku-5-5 (günstiger).
+# Sprachmodell per Umgebungsvariable: LLM_PROVIDER=openai (Standard) oder anthropic
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "openai")
+OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-6-luna")
 # claude-sonnet-5-5 lehnt thinking "disabled" ab und braucht eine Anpassung unten.
 CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-sonnet-5")
 
@@ -155,8 +158,6 @@ async def speech_to_text(audio_bytes: bytes, filename: str = "audio.webm",
 
 def generate_answer(question: str, language="zh", age="2-4", style="direkt", conversation=None,
                     strategy=None, previous_answers=None) -> str:
-    # Claude direkt über die Anthropic API. Liest ANTHROPIC_API_KEY aus der Umgebung.
-    client = Anthropic()
     system_prompt = build_system_prompt(language, age, style, strategy, previous_answers)
     if strategy in REPEAT_PROMPTS:
         max_tok = 160 if age == "2-4" else 300
@@ -168,15 +169,27 @@ def generate_answer(question: str, language="zh", age="2-4", style="direkt", con
             messages.append({"role": "user", "content": turn["question"]})
             messages.append({"role": "assistant", "content": turn["answer"]})
     messages.append({"role": "user", "content": question})
-    message = client.messages.create(
-        model=CLAUDE_MODEL,
-        max_tokens=max_tok,
-        # Das Modell denkt sonst manchmal zuerst nach und braucht dafür die kurzen max_tokens auf
-        thinking={"type": "disabled"},
-        system=system_prompt,
-        messages=messages,
+    if LLM_PROVIDER == "anthropic":
+        # Claude direkt über die Anthropic API. Liest ANTHROPIC_API_KEY aus der Umgebung.
+        message = Anthropic().messages.create(
+            model=CLAUDE_MODEL,
+            max_tokens=max_tok,
+            # Das Modell denkt sonst manchmal zuerst nach und braucht dafür die kurzen max_tokens auf
+            thinking={"type": "disabled"},
+            system=system_prompt,
+            messages=messages,
+        )
+        return "".join(block.text for block in message.content if block.type == "text")
+    # OpenAI (ChatGPT) über die Responses API. Liest OPENAI_API_KEY aus der Umgebung.
+    response = OpenAI().responses.create(
+        model=OPENAI_MODEL,
+        instructions=system_prompt,
+        input=messages,
+        max_output_tokens=max_tok,
+        # gpt-6-luna denkt standardmässig ("medium") zuerst nach und bräuchte dafür die kurzen max_output_tokens auf
+        reasoning={"effort": "none"},
     )
-    return "".join(block.text for block in message.content if block.type == "text")
+    return response.output_text
 
 
 async def text_to_speech(text: str, voice_key="boy", language="zh") -> str:

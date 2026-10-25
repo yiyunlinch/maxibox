@@ -79,17 +79,21 @@ if [ -z "$(get_env GROQ_API_KEY)" ]; then
     echo
     set_env GROQ_API_KEY "$value"
 fi
-if [ -z "$(get_env ANTHROPIC_API_KEY)" ]; then
-    read -rsp "ANTHROPIC_API_KEY（platform.claude.com → API Keys；还没有就直接按 Enter）：" value
+if [ -z "$(get_env OPENAI_API_KEY)" ]; then
+    read -rsp "OPENAI_API_KEY（platform.openai.com → API keys；还没有就直接按 Enter）：" value
     echo
     if [ -n "$value" ]; then
-        set_env ANTHROPIC_API_KEY "$value"
+        set_env OPENAI_API_KEY "$value"
     else
-        warn "还没有 Anthropic 密钥：录音和播放能用，但回答会报错。以后填进 $ENV_FILE 就行。"
+        warn "还没有 OpenAI 密钥：录音和播放能用，但回答会报错。以后填进 $ENV_FILE 就行。"
     fi
 fi
-if [ -z "$(get_env CLAUDE_MODEL)" ]; then
-    set_env CLAUDE_MODEL claude-sonnet-5
+# Sprachmodell: OpenAI (Standard); mit LLM_PROVIDER=anthropic und ANTHROPIC_API_KEY wieder Claude
+if [ -z "$(get_env LLM_PROVIDER)" ]; then
+    set_env LLM_PROVIDER openai
+fi
+if [ -z "$(get_env OPENAI_MODEL)" ]; then
+    set_env OPENAI_MODEL gpt-6-luna
 fi
 set_env MIC_DEVICE "$MIC_DEVICE"
 set_env SPEAKER_DEVICE "$SPEAKER_DEVICE"

@@ -26,7 +26,7 @@ Das Skript
 2. sucht USB-Mikrofon und -Lautsprecher,
 3. macht einen Aufnahme-Test,
 4. richtet die Python-Umgebung ein (`venv/`),
-5. fragt nach `GROQ_API_KEY` und `ANTHROPIC_API_KEY` (nur in `~/maxibox/.env` auf dem Pi gespeichert),
+5. fragt nach `GROQ_API_KEY` und `OPENAI_API_KEY` (nur in `~/maxibox/.env` auf dem Pi gespeichert),
 6. startet Backend (`maxibox`) und Knopf-Programm (`maxibox-box`) als Dienste, auch nach jedem Neustart.
 
 ## Benutzen
@@ -43,6 +43,7 @@ Ohne Knopf testen: `sudo systemctl stop maxibox-box`, dann
 ## Nützlich
 
 - Schlüssel oder Modell ändern: `nano ~/maxibox/.env`, danach `sudo systemctl restart maxibox`
-- Modell: `CLAUDE_MODEL=claude-sonnet-5` (Standard) oder `claude-haiku-5-5` (rund 20-mal günstiger)
+- Sprachmodell: OpenAI `gpt-6-luna` (Standard, `OPENAI_MODEL`). Für Claude `LLM_PROVIDER=anthropic`
+  und `ANTHROPIC_API_KEY` setzen (Modell über `CLAUDE_MODEL`, Standard `claude-sonnet-5`).
 - Logs: `journalctl -u maxibox-box -f` (Knopf) und `journalctl -u maxibox -f` (Backend)
 - Aktualisieren: `cd ~/maxibox && git pull && sudo systemctl restart maxibox maxibox-box`

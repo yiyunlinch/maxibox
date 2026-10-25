@@ -130,7 +130,8 @@ if [ "$started" != 1 ]; then
     exit 1
 fi
 
-# Knopf (GPIO17 an Pin 11, GND an Pin 9): gedrückt halten, sprechen, loslassen
+# Knopf (GPIO17 an Pin 11, GND an Pin 9) und LED (GPIO27 an Pin 13, GND an Pin 14):
+# einmal drücken, sprechen, nochmals drücken; die LED leuchtet, solange die Box zuhört
 sudo tee /etc/systemd/system/maxibox-box.service > /dev/null <<EOF
 [Unit]
 Description=MaxiBox Knopf, Aufnahme und Wiedergabe
@@ -155,7 +156,7 @@ sudo systemctl restart maxibox-box
 
 ip="$(hostname -I | awk '{print $1}')"
 step "完成！"
-echo "现在就能用：按住按钮，听到“嘀”一声后说话，说完松开，等回答。"
+echo "现在就能用：按一下按钮，听到“嘀”、灯亮后说话，说完再按一下，等回答。"
 echo "家长页面：      http://$ip:8000 （同一个 Wi-Fi 下）"
 echo "改密钥或模型：  nano $ENV_FILE ，然后 sudo systemctl restart maxibox"
 echo "看按钮日志：    journalctl -u maxibox-box -f"

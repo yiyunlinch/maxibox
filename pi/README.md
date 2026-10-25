@@ -1,12 +1,15 @@
 # MaxiBox auf dem Raspberry Pi
 
 Der Pi ist die Box: Das Backend (`main.py`) und das Knopf-Programm laufen direkt darauf.
-Render wird nicht mehr gebraucht. Aufbau: Raspberry Pi 5, USB-Mikrofon, USB-Lautsprecher
-und ein Knopf zwischen GPIO17 (Pin 11) und GND (Pin 9).
+Render wird nicht mehr gebraucht. Aufbau: Raspberry Pi 5, USB-Mikrofon, USB-Lautsprecher,
+ein Knopf zwischen GPIO17 (Pin 11) und GND (Pin 9) und eine LED an GPIO27 (Pin 13) und
+GND (Pin 14). Eine einzelne LED braucht einen Vorwiderstand von 220–330 Ω: langes Bein
+über den Widerstand an Pin 13, kurzes Bein an Pin 14.
 
 Pins: Liegt der Pi mit den USB-Buchsen nach rechts, ist die untere Reihe der Stiftleiste
-von links nach rechts Pin 1, 3, 5, 7, 9, 11, … (die obere Reihe 2, 4, 6, …).
-Pin 9 ist also der 5. und Pin 11 der 6. Stift unten von links.
+von links nach rechts Pin 1, 3, 5, 7, 9, 11, 13, … (die obere Reihe 2, 4, 6, …, 14, …).
+Pin 9 ist also der 5., Pin 11 der 6. und Pin 13 der 7. Stift unten von links; Pin 14 ist
+der 7. Stift oben.
 
 ## Einrichten (einmalig)
 
@@ -28,7 +31,9 @@ Das Skript
 
 ## Benutzen
 
-Knopf gedrückt halten, nach dem kurzen Ton sprechen, loslassen und auf die Antwort warten.
+Knopf einmal drücken: Ein kurzer Ton kommt, die LED leuchtet und die Box hört zu. Pausen
+beim Sprechen sind kein Problem. Zum Schluss nochmals drücken: Die LED geht aus und die
+Antwort kommt. Ohne zweiten Druck endet die Frage nach 30 Sekunden (`MAX_SECONDS` in `.env`).
 Nach 5 Minuten Pause beginnt ein neues Gespräch. Die Elternseite ist im gleichen WLAN unter
 `http://<IP des Pi>:8000` erreichbar.
 

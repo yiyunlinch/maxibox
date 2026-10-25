@@ -32,7 +32,7 @@ load_env(REPO_DIR / ".env")
 BACKEND = os.environ.get("MAXIBOX_URL", "http://localhost:8000")
 MIC = os.environ.get("MIC_DEVICE", "default")
 SPEAKER = os.environ.get("SPEAKER_DEVICE", "default")
-MAX_SECONDS = 15
+MAX_SECONDS = int(os.environ.get("MAX_SECONDS", "30"))  # längste Frage in Sekunden
 SETTINGS = {
     "language": os.environ.get("MAXIBOX_LANGUAGE", "zh"),
     "age": os.environ.get("MAXIBOX_AGE", "2-4"),

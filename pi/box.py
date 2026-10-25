@@ -1,8 +1,9 @@
-"""Die MaxiBox selbst: Knopf gedrückt halten, sprechen, loslassen.
+"""Die MaxiBox selbst: Knopf einmal drücken, Frage stellen, nochmals drücken.
 
 Der Knopf hängt an GPIO17 (Pin 11) und GND (Pin 9) und nutzt den internen
-Pull-up-Widerstand. Beim Drücken ertönt ein kurzer Ton, dann läuft die Aufnahme,
-bis der Knopf losgelassen wird. Läuft als Dienst maxibox-box (pi/setup.sh).
+Pull-up-Widerstand. Die LED an GPIO27 (Pin 13, GND an Pin 14) leuchtet, solange
+die Box zuhört. Pausen beim Sprechen beenden die Frage nicht: Sie endet erst mit
+dem zweiten Druck oder nach MAX_SECONDS. Läuft als Dienst maxibox-box (pi/setup.sh).
 Auf dem Pi 5 funktioniert RPi.GPIO nicht mehr, deshalb gpiozero.
 """
 import math
@@ -13,13 +14,14 @@ import tempfile
 import time
 import wave
 
-from gpiozero import Button
+from gpiozero import LED, Button
 
 from talk import MAX_SECONDS, SPEAKER, answer, start_recording, stop_recording
 
 BUTTON_GPIO = int(os.environ.get("BUTTON_GPIO", "17"))
+LED_GPIO = int(os.environ.get("LED_GPIO", "27"))
 NEW_CHAT_AFTER = 5 * 60  # nach 5 Minuten Pause beginnt ein neues Gespräch
-MIN_SECONDS = 0.5  # kürzeres Drücken gilt als versehentlich
+MIN_SECONDS = 1.0  # kürzere Aufnahmen (z. B. versehentlicher Doppeldruck) werden verworfen
 
 
 def make_beep(path: str) -> None:
@@ -38,21 +40,29 @@ def make_beep(path: str) -> None:
 
 def main() -> None:
     button = Button(BUTTON_GPIO, pull_up=True, bounce_time=0.05)
+    led = LED(LED_GPIO)
     beep = os.path.join(tempfile.gettempdir(), "maxibox_beep.wav")
     wav = os.path.join(tempfile.gettempdir(), "maxibox_frage.wav")
     make_beep(beep)
     conversation = []
     last_answer = 0.0
-    print(f"MaxiBox 准备好了：按钮接在 GPIO{BUTTON_GPIO}", flush=True)
+    print(f"MaxiBox 准备好了：按钮 GPIO{BUTTON_GPIO}，灯 GPIO{LED_GPIO}", flush=True)
     while True:
         button.wait_for_press()
         if time.monotonic() - last_answer > NEW_CHAT_AFTER:
             conversation = []
         subprocess.run(["aplay", "-q", "-D", SPEAKER, beep], check=False)
+        led.on()
         started = time.monotonic()
         proc = start_recording(wav)
+        # Erst den ersten Druck loslassen; der nächste Druck beendet die Frage
         button.wait_for_release(timeout=MAX_SECONDS)
+        remaining = MAX_SECONDS - (time.monotonic() - started)
+        if remaining > 0:
+            button.wait_for_press(timeout=remaining)
         stop_recording(proc)
+        led.off()
+        button.wait_for_release(timeout=5)
         if time.monotonic() - started < MIN_SECONDS:
             continue
         conversation = answer(wav, conversation)

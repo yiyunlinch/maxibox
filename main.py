@@ -6,7 +6,7 @@ from pathlib import Path
 
 import httpx
 import edge_tts
-from anthropic import AnthropicFoundry
+from anthropic import Anthropic
 from fastapi import FastAPI, UploadFile, Form
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -17,6 +17,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 HTML_PATH = Path(__file__).parent / "templates" / "index.html"
 
 GROQ_API_KEY = os.environ["GROQ_API_KEY"]
+# Modell per Umgebungsvariable wählbar, z. B. claude-haiku-5-5 (günstiger).
+# claude-sonnet-5-5 lehnt thinking "disabled" ab und braucht eine Anpassung unten.
+CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-sonnet-5")
 
 def normalize_question(question: str) -> str:
     """Interpunktion und Leerzeichen entfernen, damit '为什么天是蓝的?' und
@@ -152,9 +155,8 @@ async def speech_to_text(audio_bytes: bytes, filename: str = "audio.webm",
 
 def generate_answer(question: str, language="zh", age="2-4", style="direkt", conversation=None,
                     strategy=None, previous_answers=None) -> str:
-    # Claude über Azure Foundry. Liest ANTHROPIC_FOUNDRY_API_KEY und
-    # ANTHROPIC_FOUNDRY_RESOURCE automatisch aus der Umgebung.
-    client = AnthropicFoundry()
+    # Claude direkt über die Anthropic API. Liest ANTHROPIC_API_KEY aus der Umgebung.
+    client = Anthropic()
     system_prompt = build_system_prompt(language, age, style, strategy, previous_answers)
     if strategy in REPEAT_PROMPTS:
         max_tok = 160 if age == "2-4" else 300
@@ -167,9 +169,9 @@ def generate_answer(question: str, language="zh", age="2-4", style="direkt", con
             messages.append({"role": "assistant", "content": turn["answer"]})
     messages.append({"role": "user", "content": question})
     message = client.messages.create(
-        model="claude-sonnet-5",
+        model=CLAUDE_MODEL,
         max_tokens=max_tok,
-        # Sonnet 5 denkt sonst manchmal zuerst nach und braucht dafür die kurzen max_tokens auf
+        # Das Modell denkt sonst manchmal zuerst nach und braucht dafür die kurzen max_tokens auf
         thinking={"type": "disabled"},
         system=system_prompt,
         messages=messages,

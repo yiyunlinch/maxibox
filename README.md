@@ -106,27 +106,27 @@ Für Version 2 ist ein lokales Gesprächsgedächtnis vorgesehen.
 
 Dadurch können Kinder ein Thema über einen längeren Zeitraum weiterverfolgen, auch wenn sie zwischendurch andere Fragen stellen.
 
-### Beispiel: Vier Arten von Fragen
+### Beispiel: Warum ist die Kiwi die Königin der Früchte?
 
-**1. Erste Frage – Wissenschaftlich erklären**
+**1. Erste Frage**
 
 **Kind:** Warum ist die Kiwi die Königin der Früchte?
 
 **MaxiBox:** Die Kiwi wird manchmal so genannt, weil sie viele wichtige Nährstoffe enthält. Sie hat besonders viel Vitamin C, das unser Immunsystem unterstützt. Ausserdem enthält sie Ballaststoffe, die gut für unsere Verdauung sind. Aber eigentlich gibt es keine offizielle Königin der Früchte!
 
-**2. Wiederholte Frage – Wissen vertiefen**
+**2. Wiederholte Frage** 
 
 **Kind:** Warum ist die Kiwi die Königin der Früchte?
 
 **MaxiBox:** Die Kiwi enthält besonders viel Vitamin C. Dieses Vitamin unterstützt unser Immunsystem und hilft bei der Heilung von Wunden. Eine grüne Kiwi enthält pro 100 Gramm sogar mehr Vitamin C als eine Orange. Trotzdem sind auch andere Früchte gesund, weil sie unterschiedliche Nährstoffe enthalten.
 
-**3. Folgefrage – Kontext verstehen**
+**3. Folgefrage**
 
 **Kind:** Und wer ist dann der König der Tiere?
 
 **MaxiBox:** Der Löwe wird oft als König der Tiere bezeichnet. Das liegt an seiner mächtigen Erscheinung und seiner grossen Mähne, die wie eine Krone aussieht. Aber genau wie bei der Kiwi ist das nur ein Spitzname. In der Natur gibt es keinen echten König!
 
-**4. Nicht verstanden – Einfacher erklären**
+**4. Nicht verstanden**
 
 **Kind:** Ich verstehe nicht, was das Immunsystem ist.
 

@@ -24,6 +24,9 @@ Die Verarbeitung erfolgt in mehreren Schritten:
 
 Das Backend läuft lokal auf dem Raspberry Pi mit Python und FastAPI. Externe APIs werden über das Internet aufgerufen.
 
+<img width="542" height="184" alt="Bildschirmfoto 2026-10-26 um 13 56 17" src="https://github.com/user-attachments/assets/4cd6bfbd-82e7-4ba5-9d6f-6ac2ea0a4fae" />
+
+
 ## 3. Version 1 – Grundfunktion (Frühjahrssemester 2026)
 
 In der ersten Version stand die technische Umsetzung im Mittelpunkt.
@@ -54,6 +57,7 @@ Die technische Architektur wurde vereinfacht:
 
 Dadurch wird kein externer Hosting-Dienst wie Render mehr benötigt. Für die KI-Funktionen bleibt eine Internetverbindung notwendig.
 
+
 ### 4.2 Wissenschaftlich fundierte Antworten
 
 MaxiBox soll nicht nur kurze und einfache Antworten geben, sondern Kindern helfen, wissenschaftliche Zusammenhänge zu verstehen.
@@ -64,6 +68,9 @@ Geplante Anpassungen:
 - Die Altersgruppe 2–4 Jahre bleibt im Code erhalten, wird aber vorerst nicht verwendet.
 - Erhöhung der maximalen Antwortlänge von 150 auf 400 Tokens
 - Wissenschaftlich korrekte, altersgerechte Erklärungen mit normalerweise 3–5 Sätzen
+
+<img width="1448" height="1086" alt="450760d7-93a5-453b-a1a1-26df426d0e2b" src="https://github.com/user-attachments/assets/97149ef3-b9f7-4975-9263-6e62a6f0b1db" />
+
 
 ### 4.3 Vier Arten von Fragen
 
@@ -94,6 +101,32 @@ Für Version 2 ist ein lokales Gesprächsgedächtnis vorgesehen.
 - Nach 12 Stunden werden die gespeicherten Einträge gelöscht.
 
 Dadurch können Kinder ein Thema über einen längeren Zeitraum weiterverfolgen, auch wenn sie zwischendurch andere Fragen stellen.
+
+### Beispiel: Vier Arten von Fragen
+
+**1. Erste Frage – Wissenschaftlich erklären**
+
+**Kind:** Warum ist die Kiwi die Königin der Früchte?
+
+**MaxiBox:** Die Kiwi wird manchmal so genannt, weil sie viele wichtige Nährstoffe enthält. Sie hat besonders viel Vitamin C, das unser Immunsystem unterstützt. Ausserdem enthält sie Ballaststoffe, die gut für unsere Verdauung sind. Aber eigentlich gibt es keine offizielle Königin der Früchte!
+
+**2. Wiederholte Frage – Wissen vertiefen**
+
+**Kind:** Warum ist die Kiwi die Königin der Früchte?
+
+**MaxiBox:** Die Kiwi enthält besonders viel Vitamin C. Dieses Vitamin unterstützt unser Immunsystem und hilft bei der Heilung von Wunden. Eine grüne Kiwi enthält pro 100 Gramm sogar mehr Vitamin C als eine Orange. Trotzdem sind auch andere Früchte gesund, weil sie unterschiedliche Nährstoffe enthalten.
+
+**3. Folgefrage – Kontext verstehen**
+
+**Kind:** Und wer ist dann der König der Tiere?
+
+**MaxiBox:** Der Löwe wird oft als König der Tiere bezeichnet. Das liegt an seiner mächtigen Erscheinung und seiner grossen Mähne, die wie eine Krone aussieht. Aber genau wie bei der Kiwi ist das nur ein Spitzname. In der Natur gibt es keinen echten König!
+
+**4. Nicht verstanden – Einfacher erklären**
+
+**Kind:** Ich verstehe nicht, was das Immunsystem ist.
+
+**MaxiBox:** Das Immunsystem ist wie eine Schutzmannschaft in deinem Körper. Es hilft dir, dich gegen Krankheitserreger wie Viren und Bakterien zu wehren. Stell dir vor, kleine Beschützer passen auf deinen Körper auf. Vitamin C aus der Kiwi hilft deinem Immunsystem, gut zu arbeiten.
 
 ## 5. Ziel der Weiterentwicklung
 

@@ -41,6 +41,7 @@ In der ersten Version stand die technische Umsetzung im Mittelpunkt.
 **Technische Architektur V1:**
 
 Das Backend wurde mit Python und FastAPI auf Render gehostet. Für die Generierung der Antworten wurde die Claude API von Anthropic verwendet.
+https://maxibox.onrender.com/
 
 ## 4. Version 2 – Weiterentwicklung (Herbstsemester 2026)
 
@@ -56,6 +57,9 @@ Die technische Architektur wurde vereinfacht:
 - **Cloud-Dienste:** Nur Spracherkennung, KI-Antworten und Sprachsynthese benötigen externe Dienste.
 
 Dadurch wird kein externer Hosting-Dienst wie Render mehr benötigt. Für die KI-Funktionen bleibt eine Internetverbindung notwendig.
+
+<img width="1672" height="941" alt="6c9e5adc-b486-4f91-892a-e9206319ed28" src="https://github.com/user-attachments/assets/39726233-4fdd-4e05-9bb8-81b67d8782ba" />
+
 
 
 ### 4.2 Wissenschaftlich fundierte Antworten

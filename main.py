@@ -36,7 +36,8 @@ def find_previous_answers(question: str, conversation: list) -> list:
     question_norm = normalize_question(question)
     return [
         turn["answer"] for turn in conversation
-        if normalize_question(turn.get("question", "")) == question_norm
+        if isinstance(turn, dict) and isinstance(turn.get("answer"), str)
+        and normalize_question(turn.get("question", "")) == question_norm
     ]
 
 
@@ -71,14 +72,8 @@ STYLE_PROMPTS = {
 }
 
 AGE_PROMPTS = {
-    "2-4": "用最简单的词语，只说1到2句话，不超过30个字。",
-    "5-10": "可以稍微详细一点，用2到3句话回答，不超过60个字。",
-}
-
-# Bei wiederholten Fragen braucht eine Analogie oder Geschichte etwas mehr Platz.
-AGE_PROMPTS_REPEAT = {
-    "2-4": "用最简单的词语，3到4句话，不超过60个字。",
-    "5-10": "用4到5句话回答，不超过120个字。",
+    "2-4": "用最简单的词语，采用一到三句话解释。",  # Beibehalten, aktuell nicht aktiviert
+    "5-10": "面向5岁及以上儿童，科学准确、容易理解；第一次回答通常3到5句话。解释清楚原因，不要因为孩子年纪小就省略重要科学信息。",
 }
 
 LANGUAGE_PROMPTS = {
@@ -91,54 +86,56 @@ LANGUAGE_PROMPTS = {
 
 
 REPEAT_PROMPTS = {
-    "analogie": (
-        "孩子已经问过这个问题一次了，说明上次的解释没听懂。"
-        "这次换一种说法：用孩子每天都能看到、摸到的东西打一个比方"
-        "（吃的东西、玩具、小动物、自己的身体）。"
-        "比方要贴近孩子的想法，但事实必须依然科学正确，不能为了简单就说错。"
-    ),
-    "geschichte": (
-        "孩子已经反复问过这个问题好几次了，说明前几次都还没听懂。"
-        "这次用一个很短的小故事，或者一个他自己动手就能试试看的小例子来解释。"
-        "说法要比上次更接近孩子的思维方式，但内容必须依然科学正确，不可以编造。"
+    "vertiefen": (
+        "孩子在最近12小时里已经问过同样的问题。不要照搬过去的答案，"
+        "请在先前解释基础上补充新的、准确的科学事实、原因或原理；"
+        "可以比首次回答稍详细，但仍适合5岁以上孩子理解。"
+        "重复提问不代表孩子一定没听懂。"
     ),
 }
 
 
 def pick_strategy(ask_count: int, style: str) -> str:
-    """Beim ersten Mal der von den Eltern gewählte Stil, danach Eskalation:
-    Erklärung -> Analogie -> Geschichte."""
-    if ask_count >= 3:
-        return "geschichte"
-    if ask_count == 2:
-        return "analogie"
-    return style
+    """Wiederholte Frage: wissenschaftlich vertiefen; sonst gewählter Stil."""
+    return "vertiefen" if ask_count >= 2 else style
 
 
-def build_system_prompt(language="zh", age="2-4", style="direkt", strategy=None, previous_answers=None):
-    if language in LANGUAGE_PROMPTS:
-        lang_prompt, _ = LANGUAGE_PROMPTS[language]
-    else:
-        lang_prompt = f"用{language}回答。"
-    is_repeat = strategy in REPEAT_PROMPTS
-    age_table = AGE_PROMPTS_REPEAT if is_repeat else AGE_PROMPTS
-    age_prompt = age_table.get(age, age_table["2-4"])
+def build_system_prompt(language="zh", age="5-10", style="direkt", strategy=None, previous_answers=None):
+    lang_prompt = LANGUAGE_PROMPTS.get(language, (f"用{language}回答。", language))[0]
+    age_prompt = AGE_PROMPTS.get(age, AGE_PROMPTS["5-10"])
     style_prompt = STYLE_PROMPTS.get(style, STYLE_PROMPTS["direkt"])
     prompt = (
-        f"你是一个温柔的AI助手，专门回答小朋友的问题。"
-        f"{lang_prompt}"
-        f"{age_prompt}"
-        f"语气亲切温暖，不要自称任何身份，不要用表情符号。"
+        "你是面向儿童的温柔、严谨的科学解释助手。"
+        f"{lang_prompt}{age_prompt}"
+        "回答自然、连贯，不要自称任何身份，不使用表情符号。"
+        "优先准确解释真实的科学原理，避免错误的简化、夸大或编造。"
+        "如果孩子根据上一轮答案追问，要正确理解代词、概念和上下文，进一步解释相关原因。"
+        "如果孩子明确表示‘没听懂’、‘不明白’或提出不理解的概念，"
+        "才降低解释难度，用生活中的简单例子重新解释，同时保持科学准确。"
         f"回答风格：{style_prompt}"
     )
-    if is_repeat:
-        prompt += REPEAT_PROMPTS[strategy]
+    if strategy == "vertiefen":
+        prompt += REPEAT_PROMPTS["vertiefen"]
         if previous_answers:
-            vorher = "；".join(previous_answers[-2:])
-            prompt += f"之前已经这样回答过了：{vorher}。不要再用同样的说法。"
-    else:
-        prompt += "不要用列举、不要用比喻堆叠，直接简单回答。"
+            prompt += "之前的回答是：" + "；".join(previous_answers[-2:]) + "。请避免重复这些内容。"
     return prompt
+
+
+def select_context(question: str, conversation: list) -> list:
+    """Letzte 5 Runden + ältere exakte Wiederholungen, ohne Duplikate.
+
+    Zeitfilterung erfolgt bei der lokalen Speicherung im Raspberry Pi.
+    """
+    turns = [t for t in (conversation or []) if isinstance(t, dict)
+             and isinstance(t.get("question"), str) and isinstance(t.get("answer"), str)]
+    recent = turns[-5:]
+    prior_same = [t for t in turns[:-5]
+                  if normalize_question(t["question"]) == normalize_question(question)]
+    chosen = []
+    for t in prior_same + recent:
+        if not any(t is seen for seen in chosen):
+            chosen.append(t)
+    return chosen
 
 
 async def speech_to_text(audio_bytes: bytes, filename: str = "audio.webm",
@@ -156,18 +153,14 @@ async def speech_to_text(audio_bytes: bytes, filename: str = "audio.webm",
     return resp.json()["text"]
 
 
-def generate_answer(question: str, language="zh", age="2-4", style="direkt", conversation=None,
+def generate_answer(question: str, language="zh", age="5-10", style="direkt", conversation=None,
                     strategy=None, previous_answers=None) -> str:
     system_prompt = build_system_prompt(language, age, style, strategy, previous_answers)
-    if strategy in REPEAT_PROMPTS:
-        max_tok = 160 if age == "2-4" else 300
-    else:
-        max_tok = 80 if age == "2-4" else 150
+    max_tok = 250 if age == "2-4" else 400
     messages = []
-    if conversation:
-        for turn in conversation[-5:]:
-            messages.append({"role": "user", "content": turn["question"]})
-            messages.append({"role": "assistant", "content": turn["answer"]})
+    for turn in select_context(question, conversation):
+        messages.append({"role": "user", "content": turn["question"]})
+        messages.append({"role": "assistant", "content": turn["answer"]})
     messages.append({"role": "user", "content": question})
     if LLM_PROVIDER == "anthropic":
         # Claude direkt über die Anthropic API. Liest ANTHROPIC_API_KEY aus der Umgebung.
@@ -210,13 +203,16 @@ async def index():
 def ask(
     audio: UploadFile,
     language: str = Form("zh"),
-    age: str = Form("2-4"),
+    age: str = Form("5-10"),
     style: str = Form("direkt"),
     voice: str = Form("boy"),
     conversation: str = Form("[]"),
 ):
     try:
         conv = json.loads(conversation)
+        if not isinstance(conv, list):
+            conv = []
+        age = "5-10"  # V2: nur 5+ aktiv; 2-4-Code bleibt bestehen
         audio_bytes = asyncio.run(audio.read())
         print(f"[1/3] Audio: {len(audio_bytes)} bytes")
         # Dateiname und Format vom Gerät übernehmen (Web: .webm, Android: .m4a)
@@ -248,13 +244,16 @@ def ask(
 def ask_text(
     question: str = Form(...),
     language: str = Form("zh"),
-    age: str = Form("2-4"),
+    age: str = Form("5-10"),
     style: str = Form("direkt"),
     voice: str = Form("boy"),
     conversation: str = Form("[]"),
 ):
     try:
         conv = json.loads(conversation)
+        if not isinstance(conv, list):
+            conv = []
+        age = "5-10"  # V2: nur 5+ aktiv; 2-4-Code bleibt bestehen
         previous = find_previous_answers(question, conv)
         ask_count = len(previous) + 1
         strategy = pick_strategy(ask_count, style)

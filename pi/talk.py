@@ -35,7 +35,7 @@ SPEAKER = os.environ.get("SPEAKER_DEVICE", "default")
 MAX_SECONDS = int(os.environ.get("MAX_SECONDS", "30"))  # längste Frage in Sekunden
 SETTINGS = {
     "language": os.environ.get("MAXIBOX_LANGUAGE", "zh"),
-    "age": os.environ.get("MAXIBOX_AGE", "2-4"),
+    "age": "5-10",  # V2: 5+ only; younger-age logic stays in main.py
     "style": os.environ.get("MAXIBOX_STYLE", "direkt"),
     "voice": os.environ.get("MAXIBOX_VOICE", "boy"),
 }
@@ -81,7 +81,7 @@ def play(audio_url: str) -> None:
 def answer(wav: str, conversation: list) -> list:
     """Aufnahme schicken, Antwort zeigen und abspielen; gibt den neuen Verlauf zurück.
 
-    Wie im Browser gehen die letzten 5 Fragen und Antworten als Verlauf mit.
+    Die lokale 12-Stunden-Historie wird an das Backend weitergereicht.
     """
     print("思考中……", flush=True)
     try:
@@ -95,7 +95,7 @@ def answer(wav: str, conversation: list) -> list:
     print(f"问：{result.get('question')}", flush=True)
     print(f"答：{result.get('answer')}", flush=True)
     play(result["audio"])
-    return (conversation + [{"question": result["question"], "answer": result["answer"]}])[-5:]
+    return conversation + [{"question": result["question"], "answer": result["answer"]}]
 
 
 def main() -> None:
